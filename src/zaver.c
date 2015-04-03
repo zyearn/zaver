@@ -1,4 +1,5 @@
 #include "util.h"
+#include "http.h"
 
 int main(int argc, char* argv[]) {
     int listenfd;
@@ -23,8 +24,8 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        do_request(infd);
         close(infd);
-        
     }
     return 0;
 }

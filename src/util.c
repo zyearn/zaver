@@ -34,6 +34,9 @@ int open_listenfd(int port)
     return listenfd;
 }
 
+/*
+    make a socket non blocking. If a listen socket is a blocking socket, after it comes out from epoll and accepts the last connection, the next accpet will block, which is not what we want
+*/
 int make_socket_non_blocking(int fd) {
     int flags, s;
     flags = fcntl(fd, F_GETFL, 0);

@@ -1,7 +1,7 @@
 all: zaver 
 
-zaver: zaver.cpp
-	g++ -W -Wall -lpthread -o zaver zaver.cpp util.cpp
+zaver: zaver.c
+	gcc -W -Wall -lpthread -o zaver zaver.c util.c http.c rio.c
 
 clean:
 	rm zaver
