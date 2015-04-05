@@ -4,7 +4,7 @@
 
 #define MAXLINE 8192
 #define SHORTLINE 512
-#define root "/Users/zjs/lifeofzjs/public"
+#define root "/home/zjs/macHome/lifeofzjs/public"
 
 mime_type_t zaver_mime[] = 
 {
@@ -72,7 +72,7 @@ void read_request_body(rio_t *rio) {
     char buf[MAXLINE];
     rio_readlineb(rio, buf, MAXLINE); 
     while(strcmp(buf, "\r\n")) {
-        log_info("%s", buf);
+        //log_info("%s", buf);
         rio_readlineb(rio, buf, MAXLINE); 
     }
 
@@ -135,6 +135,7 @@ void serve_static(int fd, char *filename, int filesize) {
 
     int srcfd = open(filename, O_RDONLY, 0);
     check(srcfd > 2, "open error");
+    // can use sendfile
     char *srcaddr = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
     check(srcaddr > 0, "mmap error");
     close(srcfd);
