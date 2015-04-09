@@ -54,43 +54,52 @@ void* do_request(void *infd) {
     if(strcasecmp(method, "GET")) {
         log_err("req line = %s", buf);
         do_error(fd, method, "501", "Not Implemented", "zaver doesn't support");
-        return NULL;
+        continue;
     }
 
-    read_request_body(&rio);
+    rc = read_request_body(&rio);
+    if (rc == 0) {
+        log_info("ready to close fd %d", fd);
+        close(fd);
+        break;
+    }
+
+    log_info("read_request_body %s suc: fd %d", uri, fd);
     parse_uri(uri, filename, NULL);
 
     if(stat(filename, &sbuf) < 0) {
         do_error(fd, filename, "404", "Not Found", "zaver can't find the file");
-        return NULL;
+        continue;
     }
 
     if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
     {
         do_error(fd, filename, "403", "Forbidden",
                 "zaver can't read the file");
-        return NULL;
+        continue;
     }
     
     serve_static(fd, filename, sbuf.st_size);
+    log_info("serve_static suc");
 
     }
 }
 
-void read_request_body(rio_t *rio) {
+int read_request_body(rio_t *rio) {
     check(rio != NULL, "rio == NULL");
     
     int rc;
     char buf[MAXLINE];
     rc = rio_readlineb(rio, buf, MAXLINE); 
-    check(rc >= 0, "rc >= 0");
+    if (rc == 0) return rc;
+    check(rc > 0, "rc > 0 while rc == %d", rc);
     while(strcmp(buf, "\r\n")) {
-        //log_info("%s", buf);
+        log_info("in the read_request_body and buf == %s, len = %d", buf, strlen(buf));
         rc = rio_readlineb(rio, buf, MAXLINE); 
-        check(rc >= 0, "rc >= 0");
+        check(rc > 0, "rc > 0");
     }
 
-    return;
+    return 1; 
 }
 
 void parse_uri(char *uri, char *filename, char *querystring) {

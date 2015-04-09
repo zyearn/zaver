@@ -149,9 +149,11 @@ static void *threadpool_worker(void *arg) {
         
         /*  Wait on condition variable, check for spurious wakeups. */
         while (pool->queue_size == 0) {
+            log_info("%d goto sleep", pthread_self());
             pthread_cond_wait(&(pool->cond), &(pool->lock));
         }
 
+        log_info("%d wake up", pthread_self());
         task = pool->head->next;
         if (task == NULL) {
             log_info("empyt task list");
@@ -164,6 +166,7 @@ static void *threadpool_worker(void *arg) {
         pthread_mutex_unlock(&(pool->lock));
 
         (*(task->func))(task->arg);
+        log_info("%d complete its job", pthread_self());
         /* TODO: memory pool */
         free(task);
     }
