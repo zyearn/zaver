@@ -1,7 +1,7 @@
 all: zaver 
 
 zaver: zaver.c
-	gcc -W -Wall -lpthread -o zaver zaver.c util.c http.c rio.c epoll.c
+	gcc -o zaver zaver.c util.c http.c rio.c epoll.c threadpool.c -lpthread 
 
 clean:
 	rm zaver

@@ -15,7 +15,7 @@ typedef struct mime_type_s
 }mime_type_t;
 
 const char* get_file_type(const char *type);
-void do_request(int fd);
+void *do_request(void *infd);
 void read_request_body(rio_t *rio);
 void parse_uri(char *uri, char *filename, char *querystring);
 void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
