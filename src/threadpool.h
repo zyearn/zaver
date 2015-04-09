@@ -10,6 +10,8 @@ extern "C" {
 #include <pthread.h>
 #include "dbg.h"
 
+#define THREAD_NUM 8
+
 typedef struct zv_task_s {
     void (*func)(void *);
     void *arg;

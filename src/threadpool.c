@@ -60,6 +60,7 @@ err:
 
 
 int threadpool_add(zv_threadpool_t *pool, void (*func)(void *), void *arg) {
+    int rc;
     if (pool == NULL || func == NULL) {
         log_err("pool == NULL or func == NULL");
         return -1;
@@ -82,12 +83,15 @@ int threadpool_add(zv_threadpool_t *pool, void (*func)(void *), void *arg) {
     pool->head->next = task;
 
     pool->queue_size++;
+    
+    rc = pthread_cond_signal(&(pool->cond));
+    check(rc == 0, "pthread_cond_signal");
 
     if(pthread_mutex_unlock(&pool->lock) != 0) {
         return -1;
     }
-
-
+    
+    return 0;
 }
 
 int threadpool_free(zv_threadpool_t *pool) {
@@ -108,6 +112,8 @@ int threadpool_free(zv_threadpool_t *pool) {
     }
 
     //TODO: how to free mutex and cond properly
+
+    return 0;
 }
 
 int threadpool_destory(zv_threadpool_t *pool) {
@@ -125,6 +131,8 @@ int threadpool_destory(zv_threadpool_t *pool) {
     do {
         // set the showdown flag of pool and wake up all thread    
     } while(0);
+
+    return 0;
 }
 
 static void *threadpool_worker(void *arg) {
@@ -150,7 +158,7 @@ static void *threadpool_worker(void *arg) {
             continue;
         }
 
-        pool->head = task->next;
+        pool->head->next = task->next;
         pool->queue_size--;
 
         pthread_mutex_unlock(&(pool->lock));
