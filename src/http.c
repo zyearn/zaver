@@ -4,6 +4,8 @@
 
 #define CR '\r'
 #define LF '\n'
+#define CRLFCRLF "\r\n\r\n"
+
 #define MAXLINE 8192
 #define SHORTLINE 512
 #define root "/home/zjs/macHome/lifeofzjs/public"
@@ -15,6 +17,7 @@
 
 #define zv_str4cmp(m, c0, c1, c2, c3)                                        \
     *(uint32_t *) m == ((c3 << 24) | (c2 << 16) | (c1 << 8) | c0)
+
 mime_type_t zaver_mime[] = 
 {
     {".html", "text/html"},
@@ -59,7 +62,9 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
     } state;
 
     state = r->state;
+    check(state == 0, "state should be 0");
 
+    log_info("ready to parese request line, start = %d, last= %d", r->pos, r->last);
     for (p = r->pos; p < r->last; p++) {
         ch = *p;
 
@@ -67,6 +72,7 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
 
         /* HTTP methods: GET, HEAD, POST */
         case sw_start:
+            log_info("in sw_start");
             r->request_start = p;
 
             if (ch == CR || ch == LF) {
@@ -82,7 +88,7 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
 
         case sw_method:
             if (ch == ' ') {
-                r->method_end = p - 1;
+                r->method_end = p;
                 m = r->request_start;
 
                 switch (p - m) {
@@ -304,12 +310,84 @@ done:
     return ZV_OK;
 }
 
+int zv_http_parse_request_body(zv_http_request_t *r) {
+    u_char c, ch, *p, *m;
+    enum {
+        sw_start = 0,
+        sw_cr,
+        sw_crlf,
+        sw_crlfcr
+    } state;
+
+    state = r->state;
+    check(state == 0, "state should be 0");
+
+    log_info("ready to parese request body, start = %d, last= %d", r->pos, r->last);
+    for (p = r->pos; p < r->last; p++) {
+        ch = *p;
+
+        switch (state) {
+
+        case sw_start:
+            switch (ch) {
+            case CR:
+                state = sw_cr;
+                break;
+            default:
+                break;
+            }
+            break;
+
+        case sw_cr:
+            switch (ch) {
+            case LF:
+                state = sw_crlf;
+                break;
+            default:
+                return ZV_HTTP_PARSE_INVALID_REQUEST;
+            }
+            break;
+
+        case sw_crlf:
+            switch (ch) {
+            case CR:
+                state = sw_crlfcr;
+                break;
+            default:
+                state = sw_start;
+                break;
+            }
+            break;
+
+        case sw_crlfcr:
+            switch (ch) {
+            case LF:
+                goto done;
+            default:
+                return ZV_HTTP_PARSE_INVALID_REQUEST;
+            }
+            break;
+        }   
+    }
+
+    r->pos = p;
+    r->state = state;
+
+    return ZV_AGAIN;
+
+done:
+    r->pos = p + 1;
+
+    r->state = sw_start;
+
+    return ZV_OK;
+}
+
 
 int zv_init_request_t(zv_http_request_t *r, int fd) {
     r->fd = fd;
-    r->pos = r->last = 0;
+    r->pos = r->last = r->buf;
     r->state = 0;
-
 
     return ZV_OK;
 }
@@ -323,11 +401,12 @@ void* do_request(void *ptr) {
     char buf[MAXLINE];
     char filename[SHORTLINE];
     struct stat sbuf;
+    int n;
 
-    rio_readinitb(&rio, fd);
-
-    for(;;){
+    log_info("in fd %d, ready to inf for", fd);
+    for(;;) {
     
+        /*
         rc = rio_readlineb(&rio, buf, MAXLINE);
         check((rc >= 0 || rc == -EAGAIN), "read request line, rc should > 0");
         if (rc == -EAGAIN) {
@@ -349,9 +428,49 @@ void* do_request(void *ptr) {
             close(fd);
             break;
         }
+        */
+        
+        n = read(fd, r->last, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last);
+        log_info("buffer remaining: %d", (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last);
+        if (n == 0) {   // EOF
+            log_info("read return 0, ready to close fd %d", fd);
+            goto err;
+        }
 
-        log_info("read_request_body %s suc: fd %d", uri, fd);
-        parse_uri(uri, filename, NULL);
+        if (n < 0) {
+            if (errno != EAGAIN) {
+                log_err("read err");
+                goto err;
+            }
+            break;
+        }
+
+        r->last += n;
+        check(r->last <= r->buf + MAX_BUF, "r->last <= MAX_BUF");
+        
+        log_info("ready to parse request line"); 
+        rc = zv_http_parse_request_line(r);
+        if (rc == ZV_AGAIN) {
+            continue;
+        } else if (rc != ZV_OK) {
+            log_err("rc != ZV_OK");
+            goto err;
+        }
+
+        log_info("method == %.*s",r->method_end - r->request_start, r->request_start);
+        log_info("uri == %.*s", r->uri_end - r->uri_start, r->uri_start);
+
+        log_info("ready to parse request body");
+        rc  = zv_http_parse_request_body(r);
+        if (rc == ZV_AGAIN) {
+            continue;
+        } else if (rc != ZV_OK) {
+            log_err("rc != ZV_OK");
+            goto err;
+        }
+
+        //log_info("read_request_body %s suc: fd %d", uri, fd);
+        parse_uri(r->uri_start, r->uri_end - r->uri_start, filename, NULL);
 
         if(stat(filename, &sbuf) < 0) {
             do_error(fd, filename, "404", "Not Found", "zaver can't find the file");
@@ -370,6 +489,9 @@ void* do_request(void *ptr) {
 
         fflush(stdout);
     }
+
+err:
+    close(fd);
 }
 
 int read_request_body(rio_t *rio) {
@@ -389,9 +511,9 @@ int read_request_body(rio_t *rio) {
     return 1; 
 }
 
-void parse_uri(char *uri, char *filename, char *querystring) {
+void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
     strcpy(filename, root);
-    strcat(filename, uri);
+    strncat(filename, uri, uri_length);
 
     char *last_comp = rindex(filename, '/');
     char *last_dot = rindex(last_comp, '.');
@@ -403,6 +525,7 @@ void parse_uri(char *uri, char *filename, char *querystring) {
         strcat(filename, "index.html");
     }
 
+    log_info("filename = %s", filename);
     return;
 }
 
@@ -429,6 +552,7 @@ void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
 }
 
 void serve_static(int fd, char *filename, int filesize) {
+    log_info("filename = %s", filename);
     char header[MAXLINE];
     int n;
     

@@ -13,7 +13,9 @@ int main(int argc, char* argv[]) {
     int listenfd;
     int rc;
     struct sockaddr_in clientaddr;
-    socklen_t inlen;
+    // initialize clientaddr and inlen to solve "accept Invalid argument" bug
+    socklen_t inlen = 1;
+    memset(&clientaddr, 0, sizeof(struct sockaddr_in));  
     
     listenfd = open_listenfd(3000);
     rc = make_socket_non_blocking(listenfd);
@@ -24,7 +26,11 @@ int main(int argc, char* argv[]) {
     */
     int epfd = zv_epoll_create(0);
     struct epoll_event event;
-    event.data.fd = listenfd;
+    
+    zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
+    zv_init_request_t(request, listenfd);
+
+    event.data.ptr = (void *)request;
     event.events = EPOLLIN | EPOLLET;
     zv_epoll_add(epfd, listenfd, &event);
 
@@ -40,18 +46,20 @@ int main(int argc, char* argv[]) {
         int n;
         n = zv_epoll_wait(epfd, events, MAXEVENTS, -1);
         
-        int i;
+        int i, fd;
         for (i=0; i<n; i++) {
+            zv_http_request_t *r = (zv_http_request_t *)events[i].data.ptr;
+            fd = r->fd;
+            
             if ((events[i].events & EPOLLERR) ||
                 (events[i].events & EPOLLHUP) ||
                 (!(events[i].events & EPOLLIN))) {
-                zv_http_request_t *r = (zv_http_request_t *)events[i].data.ptr;
                 log_err("epoll error %d", r->fd);
-                close(events[i].data.fd);
+                close(fd);
                 continue;
             }
             
-            if (listenfd == events[i].data.fd) {
+            if (listenfd == fd) {
                 /* we hava one or more incoming connections */
 
                 while(1) {
@@ -70,6 +78,7 @@ int main(int argc, char* argv[]) {
 
                     rc = make_socket_non_blocking(infd);
                     check(rc == 0, "make_socket_non_blocking");
+                    log_info("new connection fd %d", infd);
                     
                     zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
                     zv_init_request_t(request, infd);
@@ -87,7 +96,7 @@ int main(int argc, char* argv[]) {
                 do_request(infd);
                 close(infd);
                 */
-
+                log_info("new data from fd %d", fd);
                 rc = threadpool_add(tp, do_request, events[i].data.ptr);
                  
             }
