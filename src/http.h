@@ -3,16 +3,48 @@
 
 #include <strings.h>
 #include <stdio.h>
-#include <sys/mman.h>
+#include <stdint.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include "rio.h"
 
-typedef struct mime_type_s
-{
+#define ZV_AGAIN    EAGAIN
+#define ZV_OK       0
+
+#define ZV_HTTP_PARSE_INVALID_METHOD      10
+#define ZV_HTTP_PARSE_INVALID_REQUEST     11
+
+#define ZV_HTTP_UNKNOWN                   0x0001
+#define ZV_HTTP_GET                       0x0002
+#define ZV_HTTP_HEAD                      0x0004
+#define ZV_HTTP_POST                      0x0008
+
+typedef struct mime_type_s {
 	const char *type;
 	const char *value;
-}mime_type_t;
+} mime_type_t;
+
+typedef struct zv_http_request_s {
+    int fd;
+    char buf[8124];
+    int pos, last;
+    int state;
+    void *request_start;
+    void *method_end;
+    int method;
+    void *uri_start;
+    void *uri_end;
+    int http_major;
+    int http_minor;
+    void *request_end;
+} zv_http_request_t;
+
+
+int zv_http_parse_request_line(zv_http_request_t *r);
+int zv_init_request_t(zv_http_request_t *r, int fd);
+
 
 const char* get_file_type(const char *type);
 void *do_request(void *infd);

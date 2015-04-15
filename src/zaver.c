@@ -36,6 +36,7 @@ int main(int argc, char* argv[]) {
     /* epoll_wait loop */
     while(1) {
         log_info("ready to wait");
+        fflush(stdout);
         int n;
         n = zv_epoll_wait(epfd, events, MAXEVENTS, -1);
         
@@ -44,7 +45,8 @@ int main(int argc, char* argv[]) {
             if ((events[i].events & EPOLLERR) ||
                 (events[i].events & EPOLLHUP) ||
                 (!(events[i].events & EPOLLIN))) {
-                log_err("epoll error %d", events[i].data.fd);
+                zv_http_request_t *r = (zv_http_request_t *)events[i].data.ptr;
+                log_err("epoll error %d", r->fd);
                 close(events[i].data.fd);
                 continue;
             }
@@ -53,7 +55,8 @@ int main(int argc, char* argv[]) {
                 /* we hava one or more incoming connections */
 
                 while(1) {
-                    log_info("ready to accept");
+                    log_info("## ready to accept");
+                    fflush(stdout);
                     int infd = accept(listenfd, (struct sockaddr *)&clientaddr, &inlen);
                     if (infd == -1) {
                         if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
@@ -68,11 +71,16 @@ int main(int argc, char* argv[]) {
                     rc = make_socket_non_blocking(infd);
                     check(rc == 0, "make_socket_non_blocking");
                     
-                    event.data.fd = infd;
+                    zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
+                    zv_init_request_t(request, infd);
+                    event.data.ptr = (void *)request;
                     event.events = EPOLLIN | EPOLLET;
 
                     zv_epoll_add(epfd, infd, &event);
                 }   // end of while of accept
+
+                log_info("## end accept");
+                fflush(stdout);
 
             } else {
                 /*
@@ -80,7 +88,7 @@ int main(int argc, char* argv[]) {
                 close(infd);
                 */
 
-                rc = threadpool_add(tp, do_request, events[i].data.fd);
+                rc = threadpool_add(tp, do_request, events[i].data.ptr);
                  
             }
         }   //end of for
