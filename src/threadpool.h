@@ -37,4 +37,5 @@ int threadpool_free(zv_threadpool_t *pool);
 #ifdef __cplusplus
 }
 #endif
+
 #endif

@@ -1,7 +1,10 @@
 #ifndef _ZV_LIST_H
 #define _ZV_LIST_H
 
+#ifndef NULL
 #define NULL 0
+#endif
+
 /*
 * list_head, reference linux kernel implementation
 *
@@ -44,7 +47,7 @@ static inline void __list_del(struct list_head *prev, struct list_head *next) {
 
 static inline void list_del(struct list_head *entry) {
     __list_del(entry->prev, entry->next);
-    entry->next = entry->prev = NULL;
+    //entry->next = entry->prev = NULL;
 }
 
 /*

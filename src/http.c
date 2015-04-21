@@ -1,5 +1,4 @@
 #include "http.h"
-#include "rio.h"
 #include "dbg.h"
 
 #define CR '\r'
@@ -64,7 +63,7 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
     state = r->state;
     check(state == 0, "state should be 0");
 
-    log_info("ready to parese request line, start = %d, last= %d", r->pos, r->last);
+    log_info("ready to parese request line, start = %d, last= %d", (int)r->pos, (int)r->last);
     for (p = r->pos; p < r->last; p++) {
         ch = *p;
 
@@ -72,7 +71,6 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
 
         /* HTTP methods: GET, HEAD, POST */
         case sw_start:
-            log_info("in sw_start");
             r->request_start = p;
 
             if (ch == CR || ch == LF) {
@@ -314,6 +312,10 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
     u_char c, ch, *p, *m;
     enum {
         sw_start = 0,
+        sw_key,
+        sw_spaces_before_colon,
+        sw_spaces_after_colon,
+        sw_value,
         sw_cr,
         sw_crlf,
         sw_crlfcr
@@ -323,39 +325,86 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
     check(state == 0, "state should be 0");
 
     log_info("ready to parese request body, start = %d, last= %d", r->pos, r->last);
+
+    zv_http_header_t *hd; 
     for (p = r->pos; p < r->last; p++) {
         ch = *p;
 
         switch (state) {
-
         case sw_start:
-            switch (ch) {
-            case CR:
-                state = sw_cr;
-                break;
-            default:
+            if (ch == CR || ch == LF) {
                 break;
             }
-            break;
 
-        case sw_cr:
-            switch (ch) {
-            case LF:
-                state = sw_crlf;
-                break;
-            default:
-                return ZV_HTTP_PARSE_INVALID_REQUEST;
-            }
+            r->cur_header_key_start = p;
+            state = sw_key;
             break;
+        case sw_key:
+            if (ch == ' ') {
+                r->cur_header_key_end = p;
+                state = sw_spaces_before_colon;
+                break;
+            }
+
+            if (ch == ':') {
+                r->cur_header_key_end = p;
+                state = sw_spaces_after_colon;
+                break;
+            }
+
+            break;
+        case sw_spaces_before_colon:
+            if (ch == ' ') {
+                break;
+            } else if (ch == ':') {
+                state = sw_spaces_after_colon;
+                break;
+            } else {
+                return ZV_HTTP_PARSE_INVALID_HEADER;
+            }
+        case sw_spaces_after_colon:
+            if (ch == ' ') {
+                break;
+            }
+
+            state = sw_value;
+            r->cur_header_value_start = p;
+            break;
+        case sw_value:
+            if (ch == CR) {
+                r->cur_header_value_end = p;
+                state = sw_cr;
+            }
+
+            if (ch == LF) {
+                r->cur_header_value_end = p;
+                state = sw_crlf;
+            }
+            
+            break;
+        case sw_cr:
+            if (ch == LF) {
+                state = sw_crlf;
+                // save the current http header
+                hd = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
+                hd->key_start   = r->cur_header_key_start;
+                hd->key_end     = r->cur_header_key_end;
+                hd->value_start = r->cur_header_value_start;
+                hd->value_end   = r->cur_header_value_end;
+
+                list_add(&(hd->list), &(r->list));
+
+                break;
+            } else {
+                return ZV_HTTP_PARSE_INVALID_HEADER;
+            }
 
         case sw_crlf:
-            switch (ch) {
-            case CR:
+            if (ch == CR) {
                 state = sw_crlfcr;
-                break;
-            default:
-                state = sw_start;
-                break;
+            } else {
+                r->cur_header_key_start = p;
+                state = sw_key;
             }
             break;
 
@@ -364,7 +413,7 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
             case LF:
                 goto done;
             default:
-                return ZV_HTTP_PARSE_INVALID_REQUEST;
+                return ZV_HTTP_PARSE_INVALID_HEADER;
             }
             break;
         }   
@@ -388,50 +437,47 @@ int zv_init_request_t(zv_http_request_t *r, int fd) {
     r->fd = fd;
     r->pos = r->last = r->buf;
     r->state = 0;
+    INIT_LIST_HEAD(&(r->list));
 
     return ZV_OK;
 }
 
-void* do_request(void *ptr) {
+int zv_free_request_t(zv_http_request_t *r) {
+    
+    return ZV_OK;
+}
+
+void zx_http_handle_header(zv_http_request_t *r) {
+    list_head *pos;
+    zv_http_header_t *hd;
+
+    list_for_each(pos, &(r->list)) {
+        hd = list_entry(pos, zv_http_header_t, list);
+        /* handle */
+        log_info("###header, %.*s:%.*s", 
+            hd->key_end - hd->key_start,
+            hd->key_start,
+            hd->value_end - hd->value_start,
+            hd->value_start);
+
+        /* delete it from the original list */
+        list_del(pos);
+        free(hd);
+    }
+}
+
+void do_request(void *ptr) {
     zv_http_request_t *r = (zv_http_request_t *)ptr;
     int fd = r->fd;
     int rc;
-    rio_t rio;
-    char method[SHORTLINE], uri[SHORTLINE], version[SHORTLINE];
-    char buf[MAXLINE];
     char filename[SHORTLINE];
     struct stat sbuf;
     int n;
 
-    log_info("in fd %d, ready to inf for", fd);
     for(;;) {
-    
-        /*
-        rc = rio_readlineb(&rio, buf, MAXLINE);
-        check((rc >= 0 || rc == -EAGAIN), "read request line, rc should > 0");
-        if (rc == -EAGAIN) {
-            break;
-        }
-
-        sscanf(buf,"%s %s %s", method, uri, version);
-        log_info("request %s from fd %d", uri, fd);
-       
-        if(strcasecmp(method, "GET")) {
-            log_err("req line = %s", buf);
-            do_error(fd, method, "501", "Not Implemented", "zaver doesn't support");
-            continue;
-        }
-
-        rc = read_request_body(&rio);
-        if (rc == 0) {
-            log_info("ready to close fd %d", fd);
-            close(fd);
-            break;
-        }
-        */
-        
         n = read(fd, r->last, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last);
-        log_info("buffer remaining: %d", (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last);
+        //log_info("has read %d, buffer remaining: %d, buffer rece:%s", n, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last, r->buf);
+
         if (n == 0) {   // EOF
             log_info("read return 0, ready to close fd %d", fd);
             goto err;
@@ -468,8 +514,14 @@ void* do_request(void *ptr) {
             log_err("rc != ZV_OK");
             goto err;
         }
+        
+        /*
+        *   handle http header
+        */
+        zx_http_handle_header(r);
+        check(list_empty(&(r->list)) == 1, "header list should be empty");
 
-        //log_info("read_request_body %s suc: fd %d", uri, fd);
+
         parse_uri(r->uri_start, r->uri_end - r->uri_start, filename, NULL);
 
         if(stat(filename, &sbuf) < 0) {
@@ -489,26 +541,12 @@ void* do_request(void *ptr) {
 
         fflush(stdout);
     }
+    
+    return;
 
 err:
+    log_info("err when serve fd %d, ready to close", fd);
     close(fd);
-}
-
-int read_request_body(rio_t *rio) {
-    check(rio != NULL, "rio == NULL");
-    
-    int rc;
-    char buf[MAXLINE];
-    rc = rio_readlineb(rio, buf, MAXLINE); 
-    if (rc == 0) return rc;
-    check(rc > 0, "rc > 0 while rc == %d", rc);
-    while(strcmp(buf, "\r\n")) {
-        log_info("in the read_request_body and buf == %s, len = %d", buf, strlen(buf));
-        rc = rio_readlineb(rio, buf, MAXLINE); 
-        check(rc > 0, "rc > 0");
-    }
-
-    return 1; 
 }
 
 void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {

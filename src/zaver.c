@@ -6,7 +6,6 @@
 extern struct epoll_event *events;
 
 int main(int argc, char* argv[]) {
-
     /*
     initialize listening socket
     */
