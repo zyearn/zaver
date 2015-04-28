@@ -14,6 +14,8 @@ struct list_head {
     struct list_head *prev, *next;
 };
 
+typedef struct list_head list_head;
+
 #define INIT_LIST_HEAD(ptr) do {\
     struct list_head *_ptr = (struct list_head *)ptr;   \
     (_ptr)->next = (_ptr); (_ptr->prev) = (_ptr);       \

@@ -21,7 +21,6 @@ TESTS=$(patsubst %.c,%,$(TEST_SRC))
 TARGET=objs/zaver
 
 all: $(TARGET) tests
-
 zaver: $(TARGET)
 
 dev: CFLAGS=-g -Wall -Isrc -Wall -Wextra $(OPTFLAGS)

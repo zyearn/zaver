@@ -2,3 +2,4 @@
 *.log
 *.o
 objs/
+*_test
