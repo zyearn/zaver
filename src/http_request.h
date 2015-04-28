@@ -43,14 +43,32 @@ typedef struct zv_http_request_s {
 
 } zv_http_request_t;
 
+typedef struct {
+    int fd;
+    int keep_alive; 
+} zv_http_out_t;
+
 typedef struct zv_http_header_s {
-    void *key_start, *key_end;
+    void *key_start, *key_end;          /* not include end */
     void *value_start, *value_end;
     list_head list;
 } zv_http_header_t;
 
-extern void zx_http_handle_header(zv_http_request_t *r);
+typedef int (*zv_http_header_handler_pt)(zv_http_request_t *r, char *data, size_t len);
+
+typedef struct {
+    char *name;
+    zv_http_header_handler_pt handler;
+} zv_http_header_handle_t;
+
+extern void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o);
 extern int zv_init_request_t(zv_http_request_t *r, int fd);
 extern int zv_free_request_t(zv_http_request_t *r);
 
+extern int zv_init_out_t(zv_http_out_t *o, int fd);
+extern int zv_free_out_t(zv_http_out_t *o);
+
+extern zv_http_header_handle_t     zv_http_headers_in[];
+
 #endif
+

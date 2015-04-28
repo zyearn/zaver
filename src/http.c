@@ -75,7 +75,8 @@ void do_request(void *ptr) {
         /*
         *   handle http header
         */
-        zx_http_handle_header(r);
+        zv_http_out_t *out = (zv_http_out_t *)malloc(sizeof(zv_http_out_t));
+        zx_http_handle_header(r, out);
         check(list_empty(&(r->list)) == 1, "header list should be empty");
 
 
@@ -93,16 +94,24 @@ void do_request(void *ptr) {
             continue;
         }
         
-        serve_static(fd, filename, sbuf.st_size);
+        serve_static(fd, filename, sbuf.st_size, out);
         log_info("serve_static suc");
 
         fflush(stdout);
+
+        free(out);
+
+        if (out->keep_alive) {
+            log_info("no keep_alive! ready to close");
+            goto close;
+        }
     }
     
     return;
 
 err:
     log_info("err when serve fd %d, ready to close", fd);
+close:
     close(fd);
 }
 
@@ -137,7 +146,7 @@ void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
     sprintf(header, "HTTP/1.1 %s %s\r\n", errnum, shortmsg);
     sprintf(header, "%sServer: Zaver\r\n", header);
     sprintf(header, "%sContent-type: text/html\r\n", header);
-    sprintf(header, "%sConnection: keep-alive\r\n", header);
+    sprintf(header, "%sConnection: close\r\n", header);
     sprintf(header, "%sContent-length: %d\r\n\r\n", header, (int)strlen(body));
     //log_info("header  = \n %s\n", header);
     rio_writen(fd, header, strlen(header));
@@ -146,7 +155,7 @@ void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
     return;
 }
 
-void serve_static(int fd, char *filename, int filesize) {
+void serve_static(int fd, char *filename, int filesize, zv_http_out_t *out) {
     log_info("filename = %s", filename);
     char header[MAXLINE];
     int n;
@@ -158,7 +167,9 @@ void serve_static(int fd, char *filename, int filesize) {
     sprintf(header, "HTTP/1.1 200 OK\r\n");
     sprintf(header, "%sServer: Zaver\r\n", header);
     sprintf(header, "%sContent-length: %d\r\n", header, filesize);
-    sprintf(header, "%sConnection: keep-alive\r\n", header);
+    if (out->keep_alive) {
+        sprintf(header, "%sConnection: keep-alive\r\n", header);
+    }
     sprintf(header, "%sContent-type: %s\r\n\r\n", header, file_type);
 //    sprintf(header, "%sConnection: close\r\n\r\n", header);
 
