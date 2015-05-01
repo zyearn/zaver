@@ -31,9 +31,6 @@ typedef struct mime_type_s {
 	const char *value;
 } mime_type_t;
 
-const char* get_file_type(const char *type);
-void do_request(void *infd);
-void parse_uri(char *uri, int length, char *filename, char *querystring);
-void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
+extern void do_request(void *infd);
 
 #endif

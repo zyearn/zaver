@@ -7,6 +7,8 @@
 #ifndef HTTP_REQUEST_H
 #define HTTP_REQUEST_H
 
+#include <time.h>
+
 #define ZV_AGAIN    EAGAIN
 #define ZV_OK       0
 
@@ -18,6 +20,12 @@
 #define ZV_HTTP_GET                         0x0002
 #define ZV_HTTP_HEAD                        0x0004
 #define ZV_HTTP_POST                        0x0008
+
+#define ZV_HTTP_OK                          200
+
+#define ZV_HTTP_NOT_MODIFIED                304
+
+#define ZV_HTTP_NOT_FOUND                   404
 
 #define MAX_BUF 8124
 
@@ -31,6 +39,10 @@ typedef struct zv_http_request_s {
     int method;
     void *uri_start;
     void *uri_end;      /* not include uri_end*/ 
+    void *path_start;
+    void *path_end;
+    void *query_start;
+    void *query_end;
     int http_major;
     int http_minor;
     void *request_end;
@@ -45,7 +57,11 @@ typedef struct zv_http_request_s {
 
 typedef struct {
     int fd;
-    int keep_alive; 
+    int keep_alive;
+    time_t mtime;       /* the modified time of the file*/
+    int modified;       /* compare If-modified-since field with mtime to decide whether the file is modified since last time*/
+
+    int status;
 } zv_http_out_t;
 
 typedef struct zv_http_header_s {
@@ -54,7 +70,7 @@ typedef struct zv_http_header_s {
     list_head list;
 } zv_http_header_t;
 
-typedef int (*zv_http_header_handler_pt)(zv_http_request_t *r, char *data, size_t len);
+typedef int (*zv_http_header_handler_pt)(zv_http_request_t *r, zv_http_out_t *o, char *data, int len);
 
 typedef struct {
     char *name;
@@ -67,6 +83,8 @@ extern int zv_free_request_t(zv_http_request_t *r);
 
 extern int zv_init_out_t(zv_http_out_t *o, int fd);
 extern int zv_free_out_t(zv_http_out_t *o);
+
+extern const char *get_shortmsg_from_status_code(int status_code);
 
 extern zv_http_header_handle_t     zv_http_headers_in[];
 

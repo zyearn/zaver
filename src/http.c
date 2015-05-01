@@ -1,4 +1,9 @@
+#include <strings.h>
 #include "http.h"
+
+static const char* get_file_type(const char *type);
+static void parse_uri(char *uri, int length, char *filename, char *querystring);
+static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 
 mime_type_t zaver_mime[] = 
 {
@@ -76,9 +81,8 @@ void do_request(void *ptr) {
         *   handle http header
         */
         zv_http_out_t *out = (zv_http_out_t *)malloc(sizeof(zv_http_out_t));
-        zx_http_handle_header(r, out);
-        check(list_empty(&(r->list)) == 1, "header list should be empty");
-
+        rc = zv_init_out_t(out, fd);
+        check(rc == ZV_OK, "zv_init_out_t");
 
         parse_uri(r->uri_start, r->uri_end - r->uri_start, filename, NULL);
 
@@ -94,17 +98,27 @@ void do_request(void *ptr) {
             continue;
         }
         
+        out->mtime = sbuf.st_mtime;
+
+        zx_http_handle_header(r, out);
+        check(list_empty(&(r->list)) == 1, "header list should be empty");
+        
+        if (out->status == 0) {
+            out->status = ZV_HTTP_OK;
+        }
+
         serve_static(fd, filename, sbuf.st_size, out);
         log_info("serve_static suc");
 
         fflush(stdout);
 
-        free(out);
-
         if (out->keep_alive) {
             log_info("no keep_alive! ready to close");
+            free(out);
             goto close;
         }
+
+        free(out);
     }
     
     return;
@@ -116,8 +130,16 @@ close:
 }
 
 void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
+    char *question_mark = index(uri, '?');
+    int file_length;
+    if (question_mark) {
+        file_length = (int)(question_mark - uri);
+    } else {
+        file_length = uri_length;
+    }
+
     strcpy(filename, root);
-    strncat(filename, uri, uri_length);
+    strncat(filename, uri, file_length);
 
     char *last_comp = rindex(filename, '/');
     char *last_dot = rindex(last_comp, '.');
@@ -158,23 +180,39 @@ void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
 void serve_static(int fd, char *filename, int filesize, zv_http_out_t *out) {
     log_info("filename = %s", filename);
     char header[MAXLINE];
+    char buf[SHORTLINE];
     int n;
+    struct tm tm;
     
     const char *file_type;
     const char *dot_pos = rindex(filename, '.');
     file_type = get_file_type(dot_pos);
 
-    sprintf(header, "HTTP/1.1 200 OK\r\n");
-    sprintf(header, "%sServer: Zaver\r\n", header);
-    sprintf(header, "%sContent-length: %d\r\n", header, filesize);
+    sprintf(header, "HTTP/1.1 %d %s\r\n", out->status, get_shortmsg_from_status_code(out->status));
+
     if (out->keep_alive) {
         sprintf(header, "%sConnection: keep-alive\r\n", header);
     }
-    sprintf(header, "%sContent-type: %s\r\n\r\n", header, file_type);
-//    sprintf(header, "%sConnection: close\r\n\r\n", header);
+
+    if (out->modified) {
+        sprintf(header, "%sContent-type: %s\r\n", header, file_type);
+        sprintf(header, "%sContent-length: %d\r\n", header, filesize);
+        localtime_r(&(out->mtime), &tm);
+        strftime(buf, SHORTLINE,  "%a, %d %b %Y %H:%M:%S GMT", &tm);
+        sprintf(header, "%sLast-Modified: %s\r\n", header, buf);
+    } else {
+
+    }
+
+    sprintf(header, "%sServer: Zaver\r\n", header);
+    sprintf(header, "%s\r\n", header);
 
     n = rio_writen(fd, header, strlen(header));
     check(n == strlen(header), "rio_writen error");
+
+    if (!out->modified) {
+        goto out;
+    }
 
     int srcfd = open(filename, O_RDONLY, 0);
     check(srcfd > 2, "open error");
@@ -187,6 +225,8 @@ void serve_static(int fd, char *filename, int filesize, zv_http_out_t *out) {
     check(n == filesize, "rio_writen error");
 
     munmap(srcaddr, filesize);
+
+out:
     return;
 }
 
