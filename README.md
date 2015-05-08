@@ -16,8 +16,8 @@ yet another fast and efficient HTTP server
 
 ## todo
 
-* add command line parameter 
-* add conf file
+* ~~add command line parameter~~
+* ~~add conf file~~
 * sendfile
 * dynamic content
 * other HTTP/1.1 features

@@ -1,27 +1,90 @@
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
 #include <stdint.h>
+#include <getopt.h>
 #include "util.h"
 #include "http.h"
 #include "epoll.h"
 #include "threadpool.h"
 
 #define CONF "zaver.conf"
-
+#define PROGRAM_VERSION "0.0"
 
 extern struct epoll_event *events;
+
+static const struct option long_options[]=
+{
+    {"help",no_argument,NULL,'?'},
+    {"version",no_argument,NULL,'V'},
+    {"conf",required_argument,NULL,'c'},
+    {NULL,0,NULL,0}
+};
+
+static void usage() {
+   fprintf(stderr,
+	"zaver [option]... \n"
+	"  -c|--conf <config file>  Specify config file. Default ./zaver.conf.\n"
+	"  -?|-h|--help             This information.\n"
+	"  -V|--version             Display program version.\n"
+	);
+}
+
 int main(int argc, char* argv[]) {
     int rc;
+    int opt = 0;
+    int options_index = 0;
+    char *conf_file = CONF;
 
     /*
-    read confile file
+    * parse argv 
+    * more detail visit: http://www.gnu.org/software/libc/manual/html_node/Getopt.html
+    */
+
+    if (argc == 1) {
+        usage();
+        return 0;
+    }
+
+    while ((opt=getopt_long(argc, argv,"Vc:?h",long_options,&options_index)) != EOF) {
+        switch (opt) {
+            case  0 : break;
+            case 'c':
+                conf_file = optarg;
+                break;
+            case 'V':
+                printf(PROGRAM_VERSION"\n");
+                return 0;
+            case ':':
+            case 'h':
+            case '?':
+                usage();
+                return 0;
+        }
+    }
+
+    debug("conffile = %s", conf_file);
+
+    if (optind < argc) {
+        log_err("non-option ARGV-elements: ");
+        while (optind < argc)
+            log_err("%s ", argv[optind++]);
+        return 0;
+    }
+
+    /*
+    * read confile file
     */
     char conf_buf[BUFLEN];
     zv_conf_t cf;
-    rc = read_conf(CONF, &cf, conf_buf, BUFLEN);
+    rc = read_conf(conf_file, &cf, conf_buf, BUFLEN);
     check(rc == ZV_CONF_OK, "read conf err");
-    log_info("read conf done: root=%s, port=%d, tn = %d", cf.root, cf.port, cf.thread_num);
 
     /*
-    initialize listening socket
+    * initialize listening socket
     */
     int listenfd;
     struct sockaddr_in clientaddr;
@@ -34,7 +97,7 @@ int main(int argc, char* argv[]) {
     check(rc == 0, "make_socket_non_blocking");
 
     /*
-    create epoll and add listenfd to ep
+    * create epoll and add listenfd to ep
     */
     int epfd = zv_epoll_create(0);
     struct epoll_event event;
@@ -52,7 +115,7 @@ int main(int argc, char* argv[]) {
     zv_threadpool_t *tp = threadpool_init(cf.thread_num);
     
     /* epoll_wait loop */
-    while(1) {
+    while (1) {
         log_info("ready to wait");
         fflush(stdout);
         int n;

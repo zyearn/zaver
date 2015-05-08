@@ -55,6 +55,10 @@ int make_socket_non_blocking(int fd) {
     return 0;
 }
 
+/*
+* Read configuration file
+* TODO: trim input line
+*/
 int read_conf(char *filename, zv_conf_t *cf, char *buf, int len) {
     FILE *fp = fopen(filename, "r");
     if (!fp) {

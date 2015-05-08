@@ -168,7 +168,6 @@ static void *threadpool_worker(void *arg) {
         (*(task->func))(task->arg);
         log_info("%d complete its job", pthread_self());
         /* TODO: memory pool */
-        debug("ready to free %p", task);
         free(task);
     }
 

@@ -1,3 +1,9 @@
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
 #include <strings.h>
 #include "http.h"
 
