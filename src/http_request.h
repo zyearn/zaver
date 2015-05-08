@@ -8,6 +8,7 @@
 #define HTTP_REQUEST_H
 
 #include <time.h>
+#include "http.h"
 
 #define ZV_AGAIN    EAGAIN
 #define ZV_OK       0
@@ -30,6 +31,7 @@
 #define MAX_BUF 8124
 
 typedef struct zv_http_request_s {
+    void *root;
     int fd;
     char buf[MAX_BUF];
     void *pos, *last;
@@ -78,7 +80,7 @@ typedef struct {
 } zv_http_header_handle_t;
 
 extern void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o);
-extern int zv_init_request_t(zv_http_request_t *r, int fd);
+extern int zv_init_request_t(zv_http_request_t *r, int fd, zv_conf_t *cf);
 extern int zv_free_request_t(zv_http_request_t *r);
 
 extern int zv_init_out_t(zv_http_out_t *o, int fd);

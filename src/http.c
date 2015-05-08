@@ -4,6 +4,7 @@
 static const char* get_file_type(const char *type);
 static void parse_uri(char *uri, int length, char *filename, char *querystring);
 static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
+static char *ROOT = NULL;
 
 mime_type_t zaver_mime[] = 
 {
@@ -35,7 +36,9 @@ void do_request(void *ptr) {
     char filename[SHORTLINE];
     struct stat sbuf;
     int n;
-
+    ROOT = r->root;
+    debug("ROOT=%s", ROOT);
+    
     for(;;) {
         n = read(fd, r->last, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last);
         //log_info("has read %d, buffer remaining: %d, buffer rece:%s", n, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last, r->buf);
@@ -138,7 +141,7 @@ void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
         file_length = uri_length;
     }
 
-    strcpy(filename, root);
+    strcpy(filename, ROOT);
     strncat(filename, uri, file_length);
 
     char *last_comp = rindex(filename, '/');

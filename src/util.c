@@ -55,4 +55,44 @@ int make_socket_non_blocking(int fd) {
     return 0;
 }
 
+int read_conf(char *filename, zv_conf_t *cf, char *buf, int len) {
+    FILE *fp = fopen(filename, "r");
+    if (!fp) {
+        log_err("cannot open config file: %s", filename);
+        return ZV_CONF_ERROR;
+    }
 
+    int pos = 0;
+    char *delim_pos;
+    int line_len;
+    char *cur_pos = buf+pos;
+
+    while (fgets(cur_pos, len-pos, fp)) {
+        delim_pos = strstr(cur_pos, DELIM);
+        line_len = strlen(cur_pos);
+
+        debug("read one line from conf: %s, len = %d", cur_pos, line_len);
+        if (!delim_pos)
+            return ZV_CONF_ERROR;
+        
+        if (cur_pos[strlen(cur_pos) - 1] == '\n') {
+            cur_pos[strlen(cur_pos) - 1] = '\0';
+        }
+
+        if (strncmp("root", cur_pos, 4) == 0) {
+            cf->root = delim_pos + 1;
+        }
+
+        if (strncmp("port", cur_pos, 4) == 0) {
+            cf->port = atoi(delim_pos + 1);     
+        }
+
+        if (strncmp("threadnum", cur_pos, 9) == 0) {
+            cf->thread_num = atoi(delim_pos + 1);
+        }
+
+        cur_pos += line_len;
+    }
+
+    return ZV_CONF_OK;
+}

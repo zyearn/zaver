@@ -28,7 +28,6 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
     } state;
 
     state = r->state;
-    check(state == 0, "state should be 0");
 
     log_info("ready to parese request line, start = %d, last= %d", (int)r->pos, (int)r->last);
     for (p = r->pos; p < r->last; p++) {

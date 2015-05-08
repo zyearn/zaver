@@ -25,4 +25,4 @@ yet another fast and efficient HTTP server
 
 ## website using Zaver
 
-* <a href="http://wiki.lifeofzjs.com" target="_blank">zjs's wiki</>
+* <a href="http://wiki.lifeofzjs.com" target="_blank">zjs's wiki</a>

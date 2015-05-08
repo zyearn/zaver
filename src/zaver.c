@@ -1,22 +1,35 @@
+#include <stdint.h>
 #include "util.h"
 #include "http.h"
 #include "epoll.h"
 #include "threadpool.h"
 
-extern struct epoll_event *events;
+#define CONF "zaver.conf"
 
+
+extern struct epoll_event *events;
 int main(int argc, char* argv[]) {
+    int rc;
+
+    /*
+    read confile file
+    */
+    char conf_buf[BUFLEN];
+    zv_conf_t cf;
+    rc = read_conf(CONF, &cf, conf_buf, BUFLEN);
+    check(rc == ZV_CONF_OK, "read conf err");
+    log_info("read conf done: root=%s, port=%d, tn = %d", cf.root, cf.port, cf.thread_num);
+
     /*
     initialize listening socket
     */
     int listenfd;
-    int rc;
     struct sockaddr_in clientaddr;
     // initialize clientaddr and inlen to solve "accept Invalid argument" bug
     socklen_t inlen = 1;
     memset(&clientaddr, 0, sizeof(struct sockaddr_in));  
     
-    listenfd = open_listenfd(3000);
+    listenfd = open_listenfd(cf.port);
     rc = make_socket_non_blocking(listenfd);
     check(rc == 0, "make_socket_non_blocking");
 
@@ -27,7 +40,7 @@ int main(int argc, char* argv[]) {
     struct epoll_event event;
     
     zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
-    zv_init_request_t(request, listenfd);
+    zv_init_request_t(request, listenfd, &cf);
 
     event.data.ptr = (void *)request;
     event.events = EPOLLIN | EPOLLET;
@@ -36,7 +49,7 @@ int main(int argc, char* argv[]) {
     /*
     create thread pool
     */
-    zv_threadpool_t *tp = threadpool_init(THREAD_NUM);
+    zv_threadpool_t *tp = threadpool_init(cf.thread_num);
     
     /* epoll_wait loop */
     while(1) {
@@ -80,7 +93,7 @@ int main(int argc, char* argv[]) {
                     log_info("new connection fd %d", infd);
                     
                     zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
-                    zv_init_request_t(request, infd);
+                    zv_init_request_t(request, infd, &cf);
                     event.data.ptr = (void *)request;
                     event.events = EPOLLIN | EPOLLET;
 
