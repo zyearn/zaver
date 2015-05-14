@@ -116,8 +116,6 @@ int main(int argc, char* argv[]) {
     
     /* epoll_wait loop */
     while (1) {
-        log_info("ready to wait");
-        fflush(stdout);
         int n;
         n = zv_epoll_wait(epfd, events, MAXEVENTS, -1);
         

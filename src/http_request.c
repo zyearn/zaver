@@ -56,24 +56,14 @@ void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
     list_for_each(pos, &(r->list)) {
         hd = list_entry(pos, zv_http_header_t, list);
         /* handle */
-        /*
-        log_info("###header, %.*s:%.*s", 
-            hd->key_end - hd->key_start,
-            hd->key_start,
-            hd->value_end - hd->value_start,
-            hd->value_start);
-        */
 
         for (header_in = zv_http_headers_in; 
             strlen(header_in->name) > 0;
             header_in++) {
             if (strncmp(hd->key_start, header_in->name, hd->key_end - hd->key_start) == 0) {
             
-                log_info("find match: %s", header_in->name);
-                log_info("key = %.*s", hd->key_end-hd->key_start, hd->key_start);
-                log_info("value = %.*s", hd->value_end-hd->value_start, hd->value_start);
+                debug("key = %.*s, value = %.*s", hd->key_end-hd->key_start, hd->key_start, hd->value_end-hd->value_start, hd->value_start);
                 int len = hd->value_end-hd->value_start;
-                log_info("value_len = %d", len);
                 (*(header_in->handler))(r, o, hd->value_start, len);
                 break;
             }    

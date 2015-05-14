@@ -121,7 +121,7 @@ void do_request(void *ptr) {
 
         fflush(stdout);
 
-        if (out->keep_alive) {
+        if (!out->keep_alive) {
             log_info("no keep_alive! ready to close");
             free(out);
             goto close;
@@ -133,7 +133,6 @@ void do_request(void *ptr) {
     return;
 
 err:
-    log_info("err when serve fd %d, ready to close", fd);
 close:
     close(fd);
 }
