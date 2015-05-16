@@ -22,6 +22,7 @@ yet another fast and efficient HTTP server
 * dynamic content
 * other HTTP/1.1 features
 * memory pool
+* close socket when timeout
 
 ## website using Zaver
 

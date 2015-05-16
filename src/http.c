@@ -47,6 +47,7 @@ void do_request(void *ptr) {
     
     for(;;) {
         n = read(fd, r->last, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last);
+        check((uint64_t)r->buf + MAX_BUF > (uint64_t)r->last, "(uint64_t)r->buf + MAX_BUF");
         //log_info("has read %d, buffer remaining: %d, buffer rece:%s", n, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last, r->buf);
 
         if (n == 0) {   // EOF
@@ -56,7 +57,7 @@ void do_request(void *ptr) {
 
         if (n < 0) {
             if (errno != EAGAIN) {
-                log_err("read err");
+                log_err("read err, and errno = %d", errno);
                 goto err;
             }
             break;
@@ -90,6 +91,11 @@ void do_request(void *ptr) {
         *   handle http header
         */
         zv_http_out_t *out = (zv_http_out_t *)malloc(sizeof(zv_http_out_t));
+        if (out == NULL) {
+            log_err("no enough space for zv_http_out_t");
+            exit(1);
+        }
+
         rc = zv_init_out_t(out, fd);
         check(rc == ZV_OK, "zv_init_out_t");
 
@@ -117,23 +123,20 @@ void do_request(void *ptr) {
         }
 
         serve_static(fd, filename, sbuf.st_size, out);
-        log_info("serve_static suc");
 
-        fflush(stdout);
-
+        free(out);
         if (!out->keep_alive) {
             log_info("no keep_alive! ready to close");
-            free(out);
             goto close;
         }
 
-        free(out);
     }
     
     return;
 
 err:
 close:
+    //free(ptr);
     close(fd);
 }
 
@@ -185,8 +188,7 @@ void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
     return;
 }
 
-void serve_static(int fd, char *filename, int filesize, zv_http_out_t *out) {
-    log_info("filename = %s", filename);
+void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out) {
     char header[MAXLINE];
     char buf[SHORTLINE];
     int n;
@@ -204,7 +206,7 @@ void serve_static(int fd, char *filename, int filesize, zv_http_out_t *out) {
 
     if (out->modified) {
         sprintf(header, "%sContent-type: %s\r\n", header, file_type);
-        sprintf(header, "%sContent-length: %d\r\n", header, filesize);
+        sprintf(header, "%sContent-length: %zu\r\n", header, filesize);
         localtime_r(&(out->mtime), &tm);
         strftime(buf, SHORTLINE,  "%a, %d %b %Y %H:%M:%S GMT", &tm);
         sprintf(header, "%sLast-Modified: %s\r\n", header, buf);
@@ -216,7 +218,11 @@ void serve_static(int fd, char *filename, int filesize, zv_http_out_t *out) {
     sprintf(header, "%s\r\n", header);
 
     n = rio_writen(fd, header, strlen(header));
-    check(n == strlen(header), "rio_writen error");
+    check(n == strlen(header), "rio_writen error, errno = %d", errno);
+    if (n != strlen(header)) {
+        log_err("n != strlen(header)");
+        goto out; 
+    }
 
     if (!out->modified) {
         goto out;
@@ -230,7 +236,7 @@ void serve_static(int fd, char *filename, int filesize, zv_http_out_t *out) {
     close(srcfd);
 
     n = rio_writen(fd, srcaddr, filesize);
-    check(n == filesize, "rio_writen error");
+    // check(n == filesize, "rio_writen error");
 
     munmap(srcaddr, filesize);
 

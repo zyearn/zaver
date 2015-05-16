@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 #include <getopt.h>
+#include <signal.h>
+#include <string.h>
 #include "util.h"
 #include "http.h"
 #include "epoll.h"
@@ -84,6 +86,20 @@ int main(int argc, char* argv[]) {
     check(rc == ZV_CONF_OK, "read conf err");
 
     /*
+    *   install signal handle for SIGPIPE
+    *   when a fd is closed by remote, writing to this fd will cause system send
+    *   SIGPIPE to this process, which exit the program
+    */
+    struct sigaction sa;
+    memset(&sa, '\0', sizeof(sa));
+    sa.sa_handler = SIG_IGN;
+    sa.sa_flags = 0;
+    if (sigaction(SIGPIPE,&sa,NULL)) {
+        log_err("install sigal handler for SIGPIPI failed");
+        return 0;
+    }
+
+    /*
     * initialize listening socket
     */
     int listenfd;
@@ -124,20 +140,11 @@ int main(int argc, char* argv[]) {
             zv_http_request_t *r = (zv_http_request_t *)events[i].data.ptr;
             fd = r->fd;
             
-            if ((events[i].events & EPOLLERR) ||
-                (events[i].events & EPOLLHUP) ||
-                (!(events[i].events & EPOLLIN))) {
-                log_err("epoll error %d", r->fd);
-                close(fd);
-                continue;
-            }
-            
             if (listenfd == fd) {
                 /* we hava one or more incoming connections */
 
                 while(1) {
-                    log_info("## ready to accept");
-                    fflush(stdout);
+                    debug("## ready to accept");
                     int infd = accept(listenfd, (struct sockaddr *)&clientaddr, &inlen);
                     if (infd == -1) {
                         if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
@@ -151,9 +158,14 @@ int main(int argc, char* argv[]) {
 
                     rc = make_socket_non_blocking(infd);
                     check(rc == 0, "make_socket_non_blocking");
-                    log_info("new connection fd %d", infd);
+                    debug("new connection fd %d", infd);
                     
                     zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
+                    if (request == NULL) {
+                        log_err("malloc(sizeof(zv_http_request_t))");
+                        break;
+                    }
+
                     zv_init_request_t(request, infd, &cf);
                     event.data.ptr = (void *)request;
                     event.events = EPOLLIN | EPOLLET;
@@ -161,17 +173,22 @@ int main(int argc, char* argv[]) {
                     zv_epoll_add(epfd, infd, &event);
                 }   // end of while of accept
 
-                log_info("## end accept");
-                fflush(stdout);
-
+                debug("## end accept");
             } else {
+                if ((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN))) {
+                    log_err("epoll error fd: %d", r->fd);
+                    close(fd);
+                    continue;
+                }
                 /*
                 do_request(infd);
                 close(infd);
                 */
-                log_info("new data from fd %d", fd);
+                log_info("new task from fd %d", fd);
                 rc = threadpool_add(tp, do_request, events[i].data.ptr);
-                 
+                check(rc == 0, "threadpool_add");
             }
         }   //end of for
     }   // end of while(1)

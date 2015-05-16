@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include "dbg.h"
 
 #define RIO_BUFSIZE 8192
 typedef struct {

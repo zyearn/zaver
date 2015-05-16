@@ -74,8 +74,10 @@ int read_conf(char *filename, zv_conf_t *cf, char *buf, int len) {
     while (fgets(cur_pos, len-pos, fp)) {
         delim_pos = strstr(cur_pos, DELIM);
         line_len = strlen(cur_pos);
-
+        
+        /*
         debug("read one line from conf: %s, len = %d", cur_pos, line_len);
+        */
         if (!delim_pos)
             return ZV_CONF_ERROR;
         
@@ -98,5 +100,6 @@ int read_conf(char *filename, zv_conf_t *cf, char *buf, int len) {
         cur_pos += line_len;
     }
 
+    fclose(fp);
     return ZV_CONF_OK;
 }

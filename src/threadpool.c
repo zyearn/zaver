@@ -67,6 +67,7 @@ int threadpool_add(zv_threadpool_t *pool, void (*func)(void *), void *arg) {
     }
     
     if (pthread_mutex_lock(&(pool->lock)) != 0) {
+        log_err("pthread_mutex_lock");
         return -1;
     }
     
@@ -77,6 +78,7 @@ int threadpool_add(zv_threadpool_t *pool, void (*func)(void *), void *arg) {
         return -1;
     }
     
+    // TODO: use a memory pool
     task->func = func;
     task->arg = arg;
     task->next = pool->head->next;
@@ -88,6 +90,7 @@ int threadpool_add(zv_threadpool_t *pool, void (*func)(void *), void *arg) {
     check(rc == 0, "pthread_cond_signal");
 
     if(pthread_mutex_unlock(&pool->lock) != 0) {
+        log_err("pthread_mutex_unlock");
         return -1;
     }
     
