@@ -9,6 +9,13 @@ yet another fast and efficient HTTP server
 * non-blocking I/O
 * thread-pool
 
+## compile and run
+
+```
+make
+./objs/zaver -c zaver.conf
+```
+
 ## support
 
 * HTTP persistent connection
@@ -24,6 +31,7 @@ yet another fast and efficient HTTP server
 * memory pool
 * close socket when timeout
 
-## website using Zaver
+## more details
 
-* <a href="http://wiki.lifeofzjs.com" target="_blank">zjs's wiki</a>
+http://lifeofzjs.com/blog/2015/05/16/how-to-write-a-server/
+
