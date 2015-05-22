@@ -25,14 +25,24 @@ typedef struct {
     zv_task_t *head;
     int thread_count;
     int queue_size;
+    int shutdown;
+    int started;
 } zv_threadpool_t;
+
+typedef enum {
+    zv_tp_invalid   = -1,
+    zv_tp_lock_fail = -2,
+    zv_tp_already_shutdown  = -3,
+    zv_tp_cond_broadcast    = -4,
+    zv_tp_thread_fail       = -5,
+    
+} zv_threadpool_error_t;
 
 zv_threadpool_t *threadpool_init(int thread_num);
 
 int threadpool_add(zv_threadpool_t *pool, void (*func)(void *), void *arg);
 
-int threadpool_destory(zv_threadpool_t *pool);
-int threadpool_free(zv_threadpool_t *pool);
+int threadpool_destroy(zv_threadpool_t *pool, int gracegul);
 
 #ifdef __cplusplus
 }

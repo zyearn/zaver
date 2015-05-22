@@ -14,7 +14,7 @@
 #include "threadpool.h"
 
 #define CONF "zaver.conf"
-#define PROGRAM_VERSION "0.0"
+#define PROGRAM_VERSION "0.1"
 
 extern struct epoll_event *events;
 
@@ -192,5 +192,10 @@ int main(int argc, char* argv[]) {
             }
         }   //end of for
     }   // end of while(1)
+    
+    if (threadpool_destroy(tp, 1) < 0) {
+        log_err("destroy threadpool failed");
+    }
+
     return 0;
 }
