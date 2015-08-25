@@ -1,4 +1,3 @@
-# @file DNSManager.cc
 # @version 0.0.0
 # @author jiashun Zhu (zhujiashun2010@gmail.com) 
 # @date 2015.04.22 created by jiashunZhu

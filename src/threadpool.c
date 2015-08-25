@@ -5,6 +5,7 @@ typedef enum {
     graceful_shutdown = 2
 } zv_threadpool_sd_t;
 
+static int threadpool_free(zv_threadpool_t *pool);
 static void *threadpool_worker(void *arg);
 
 zv_threadpool_t *threadpool_init(int thread_num) {
@@ -43,7 +44,7 @@ zv_threadpool_t *threadpool_init(int thread_num) {
         goto err;
     }
     
-    int i, rc;
+    int i;
     for (i=0; i<thread_num; ++i) {
         if (pthread_create(&(pool->threads[i]), NULL, threadpool_worker, (void *)pool) != 0) {
             threadpool_destroy(pool, 0);
@@ -64,7 +65,6 @@ err:
 
     return NULL;
 }
-
 
 int threadpool_add(zv_threadpool_t *pool, void (*func)(void *), void *arg) {
     int rc, err = 0;
@@ -107,7 +107,7 @@ out:
         return -1;
     }
     
-    return 0;
+    return err;
 }
 
 int threadpool_free(zv_threadpool_t *pool) {

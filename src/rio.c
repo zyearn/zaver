@@ -61,7 +61,7 @@ ssize_t rio_writen(int fd, void *usrbuf, size_t n)
 /* $begin rio_read */
 static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n)
 {
-    int cnt;
+    size_t cnt;
 
     while (rp->rio_cnt <= 0) {  /* refill if buf is empty */
         rp->rio_cnt = read(rp->rio_fd, rp->rio_buf, 

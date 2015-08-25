@@ -29,7 +29,7 @@ make
 * dynamic content
 * other HTTP/1.1 features
 * memory pool
-* close socket when timeout
+* timer(e.g. close socket when timeout)
 
 ## more details
 
