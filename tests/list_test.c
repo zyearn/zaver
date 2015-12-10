@@ -1,7 +1,7 @@
 #include <list.h>
 #include <dbg.h>
 
-typedef struct list_head list_head;
+//typedef struct list_head list_head; 应该去掉这行，不去掉报一个重定义的错误。去掉后，make成功。
 
 typedef struct {
     void *arg;
