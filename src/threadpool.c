@@ -24,22 +24,21 @@ zv_threadpool_t *threadpool_init(int thread_num) {
     pool->shutdown = 0;
     pool->started = 0;
     pool->threads = (pthread_t *)malloc(sizeof(pthread_t) * thread_num);
-    /* dummy head */
-    pool->head = (zv_task_t *)malloc(sizeof(zv_task_t));
-    pool->head->func = NULL;
-    pool->head->arg = NULL;
-    pool->head->next = NULL;
+    pool->head = (zv_task_t *)malloc(sizeof(zv_task_t));    /* dummy head */
 
     if ((pool->threads == NULL) || (pool->head == NULL)) {
         goto err;
     }
+
+    pool->head->func = NULL;
+    pool->head->arg = NULL;
+    pool->head->next = NULL;
 
     if (pthread_mutex_init(&(pool->lock), NULL) != 0) {
         goto err;
     }
 
     if (pthread_cond_init(&(pool->cond), NULL) != 0) {
-        pthread_mutex_lock(&(pool->lock));
         pthread_mutex_destroy(&(pool->lock));
         goto err;
     }
@@ -198,15 +197,14 @@ static void *threadpool_worker(void *arg) {
         }
 
         if (pool->shutdown == immediate_shutdown) {
-            pthread_mutex_unlock(&(pool->lock));
             break;
         } else if ((pool->shutdown == graceful_shutdown) && pool->queue_size == 0) {
-            pthread_mutex_unlock(&(pool->lock));
             break;
         }
 
         task = pool->head->next;
         if (task == NULL) {
+            pthread_mutex_unlock(&(pool->lock));
             continue;
         }
 
