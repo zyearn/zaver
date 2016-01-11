@@ -149,8 +149,8 @@ void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
         file_length = uri_length;
     }
 
-    strcpy(filename, ROOT);
-    strncat(filename, uri, file_length);
+    strncpy(filename, ROOT, SHORTLINE - 1 );
+    strncat(filename, uri, SHORTLINE - strlen(filename) - 1);
 
     char *last_comp = rindex(filename, '/');
     char *last_dot = rindex(last_comp, '.');
