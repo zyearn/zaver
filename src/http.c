@@ -141,7 +141,7 @@ close:
 }
 
 void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
-    char *question_mark = index(uri, '?');
+    char *question_mark = strchr(uri, '?');
     int file_length;
     if (question_mark) {
         file_length = (int)(question_mark - uri);
@@ -159,9 +159,8 @@ void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
 
     strncat(filename, uri, file_length);
 
-    char *last_comp = rindex(filename, '/');
-    char *last_dot = rindex(last_comp, '.');
-
+    char *last_comp = strrchr(filename, '/');
+    char *last_dot = strrchr(last_comp, '.');
     if (last_dot == NULL && filename[strlen(filename)-1] != '/') {
         strcat(filename, "/");
     }
@@ -203,7 +202,7 @@ void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out) {
     struct tm tm;
     
     const char *file_type;
-    const char *dot_pos = rindex(filename, '.');
+    const char *dot_pos = strrchr(filename, '.');
     file_type = get_file_type(dot_pos);
 
     sprintf(header, "HTTP/1.1 %d %s\r\n", out->status, get_shortmsg_from_status_code(out->status));
