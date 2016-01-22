@@ -39,7 +39,7 @@ void display(list_head *head) {
     }
 }
 
-int main (int argc, char *argv[]) {
+int main() {
     st_header st_h;
     INIT_LIST_HEAD(&st_h.list);
 

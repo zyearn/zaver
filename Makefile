@@ -22,7 +22,7 @@ TARGET=objs/zaver
 all: $(TARGET) tests
 zaver: $(TARGET)
 
-dev: CFLAGS=-g -Wall -Isrc -Wall -Wextra $(OPTFLAGS)
+dev: CFLAGS=-g -Wall -Isrc -Wextra $(OPTFLAGS)
 dev: all
 
 $(TARGET): build $(OBJECTS)

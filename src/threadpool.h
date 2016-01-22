@@ -8,6 +8,7 @@ extern "C" {
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <stdint.h>
 #include "dbg.h"
 
 #define THREAD_NUM 8
