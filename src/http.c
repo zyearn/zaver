@@ -148,12 +148,20 @@ void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
     } else {
         file_length = uri_length;
     }
+    
+    strcpy(filename, ROOT);
 
-    strncpy(filename, ROOT, SHORTLINE - 1 );
-    strncat(filename, uri, SHORTLINE - strlen(filename) - 1);
+    // uri_length can not be too long
+    if (uri_length > (SHORTLINE >> 1)) {
+        log_err("uri too long: %.*s", uri_length, uri);
+        return;
+    }
+
+    strncat(filename, uri, file_length);
 
     char *last_comp = rindex(filename, '/');
     char *last_dot = rindex(last_comp, '.');
+
     if (last_dot == NULL && filename[strlen(filename)-1] != '/') {
         strcat(filename, "/");
     }
