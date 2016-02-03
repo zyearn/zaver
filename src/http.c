@@ -165,7 +165,7 @@ void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
         strcat(filename, "/");
     }
     
-    if(uri[strlen(uri)-1] == '/' || filename[strlen(filename)-1] == '/') {
+    if(filename[strlen(filename)-1] == '/') {
         strcat(filename, "index.html");
     }
 

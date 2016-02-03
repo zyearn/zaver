@@ -352,7 +352,7 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
             if (ch == LF) {
                 state = sw_crlf;
                 // save the current http header
-                hd = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
+                hd = (zv_http_header_t *)malloc(sizeof(zv_http_header_t));
                 hd->key_start   = r->cur_header_key_start;
                 hd->key_end     = r->cur_header_key_end;
                 hd->value_start = r->cur_header_value_start;
