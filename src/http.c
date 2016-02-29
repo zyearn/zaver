@@ -124,11 +124,12 @@ void do_request(void *ptr) {
 
         serve_static(fd, filename, sbuf.st_size, out);
 
-        free(out);
         if (!out->keep_alive) {
             log_info("no keep_alive! ready to close");
+            free(out);
             goto close;
         }
+        free(out);
 
     }
     
@@ -136,8 +137,8 @@ void do_request(void *ptr) {
 
 err:
 close:
-    //free(ptr);
     close(fd);
+    free(ptr);
 }
 
 void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
