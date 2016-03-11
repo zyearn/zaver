@@ -137,6 +137,8 @@ void do_request(void *ptr) {
 
 err:
 close:
+    // NOTICE: closing a file descriptor will cause it to be removed from all epoll sets automatically
+    // http://stackoverflow.com/questions/8707601/is-it-necessary-to-deregister-a-socket-from-epoll-before-closing-it
     close(fd);
     free(ptr);
 }
