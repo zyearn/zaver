@@ -30,7 +30,7 @@ make
 * ~~add command line parameter~~
 * ~~add conf file~~
 * sendfile
-* dynamic content
+* proxy
 * other HTTP/1.1 features
 * memory pool
 * timer(e.g. close socket when timeout)
