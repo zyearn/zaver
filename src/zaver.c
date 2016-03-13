@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     struct epoll_event event;
     
     zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
-    zv_init_request_t(request, listenfd, &cf);
+    zv_init_request_t(request, listenfd, epfd, &cf);
 
     event.data.ptr = (void *)request;
     event.events = EPOLLIN | EPOLLET;
@@ -143,10 +143,10 @@ int main(int argc, char* argv[]) {
             if (listenfd == fd) {
                 /* we hava one or more incoming connections */
 
+                int infd;
                 while(1) {
-                    debug("## ready to accept");
-                    int infd = accept(listenfd, (struct sockaddr *)&clientaddr, &inlen);
-                    if (infd == -1) {
+                    infd = accept(listenfd, (struct sockaddr *)&clientaddr, &inlen);
+                    if (infd < 0) {
                         if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
                             /* we have processed all incoming connections */
                             break;
@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
 
                     rc = make_socket_non_blocking(infd);
                     check(rc == 0, "make_socket_non_blocking");
-                    debug("new connection fd %d", infd);
+                    log_info("new connection fd %d", infd);
                     
                     zv_http_request_t *request = (zv_http_request_t *)malloc(sizeof(zv_http_request_t));
                     if (request == NULL) {
@@ -166,14 +166,13 @@ int main(int argc, char* argv[]) {
                         break;
                     }
 
-                    zv_init_request_t(request, infd, &cf);
+                    zv_init_request_t(request, infd, epfd, &cf);
                     event.data.ptr = (void *)request;
-                    event.events = EPOLLIN | EPOLLET;
+                    event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
                     zv_epoll_add(epfd, infd, &event);
                 }   // end of while of accept
 
-                debug("## end accept");
             } else {
                 if ((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -182,11 +181,8 @@ int main(int argc, char* argv[]) {
                     close(fd);
                     continue;
                 }
-                /*
-                do_request(infd);
-                close(infd);
-                */
-                log_info("new task from fd %d", fd);
+
+                log_info("new data from fd %d", fd);
                 rc = threadpool_add(tp, do_request, events[i].data.ptr);
                 check(rc == 0, "threadpool_add");
             }

@@ -33,6 +33,7 @@
 typedef struct zv_http_request_s {
     void *root;
     int fd;
+    int epfd;
     char buf[MAX_BUF];
     void *pos, *last;
     int state;
@@ -79,14 +80,14 @@ typedef struct {
     zv_http_header_handler_pt handler;
 } zv_http_header_handle_t;
 
-extern void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o);
-extern int zv_init_request_t(zv_http_request_t *r, int fd, zv_conf_t *cf);
-extern int zv_free_request_t(zv_http_request_t *r);
+void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o);
+int zv_init_request_t(zv_http_request_t *r, int fd, int epfd, zv_conf_t *cf);
+int zv_free_request_t(zv_http_request_t *r);
 
-extern int zv_init_out_t(zv_http_out_t *o, int fd);
-extern int zv_free_out_t(zv_http_out_t *o);
+int zv_init_out_t(zv_http_out_t *o, int fd);
+int zv_free_out_t(zv_http_out_t *o);
 
-extern const char *get_shortmsg_from_status_code(int status_code);
+const char *get_shortmsg_from_status_code(int status_code);
 
 extern zv_http_header_handle_t     zv_http_headers_in[];
 

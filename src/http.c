@@ -6,6 +6,7 @@
 
 #include <strings.h>
 #include "http.h"
+#include "epoll.h"
 
 static const char* get_file_type(const char *type);
 static void parse_uri(char *uri, int length, char *filename, char *querystring);
@@ -43,14 +44,14 @@ void do_request(void *ptr) {
     struct stat sbuf;
     int n;
     ROOT = r->root;
-    debug("ROOT=%s", ROOT);
     
     for(;;) {
         n = read(fd, r->last, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last);
-        check((uint64_t)r->buf + MAX_BUF > (uint64_t)r->last, "(uint64_t)r->buf + MAX_BUF");
-        //log_info("has read %d, buffer remaining: %d, buffer rece:%s", n, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last, r->buf);
+        // TODO: ring buffer
+        check((uint64_t)r->last < (uint64_t)r->buf + MAX_BUF, "request buffer overflow!");
 
-        if (n == 0) {   // EOF
+        if (n == 0) {   
+            // EOF
             log_info("read return 0, ready to close fd %d", fd);
             goto err;
         }
@@ -133,6 +134,11 @@ void do_request(void *ptr) {
 
     }
     
+    struct epoll_event event;
+    event.data.ptr = ptr;
+    event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+
+    zv_epoll_mod(r->epfd, r->fd, &event);
     return;
 
 err:

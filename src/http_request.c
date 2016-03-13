@@ -19,8 +19,9 @@ zv_http_header_handle_t zv_http_headers_in[] = {
     {"", zv_http_process_ignore}
 };
 
-int zv_init_request_t(zv_http_request_t *r, int fd, zv_conf_t *cf) {
+int zv_init_request_t(zv_http_request_t *r, int fd, int epfd, zv_conf_t *cf) {
     r->fd = fd;
+    r->epfd = epfd;
     r->pos = r->last = r->buf;
     r->state = 0;
     r->root = cf->root;
