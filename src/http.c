@@ -6,11 +6,13 @@
 
 #include <strings.h>
 #include "http.h"
+#include "http_parse.h"
 #include "epoll.h"
 
 static const char* get_file_type(const char *type);
 static void parse_uri(char *uri, int length, char *filename, char *querystring);
 static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
+static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out);
 static char *ROOT = NULL;
 
 mime_type_t zaver_mime[] = 
@@ -65,7 +67,7 @@ void do_request(void *ptr) {
         }
 
         r->last += n;
-        check(r->last <= r->buf + MAX_BUF, "r->last <= MAX_BUF");
+        check((size_t)r->last <= (size_t)r->buf + MAX_BUF, "r->last <= MAX_BUF");
         
         log_info("ready to parse request line"); 
         rc = zv_http_parse_request_line(r);
@@ -76,11 +78,11 @@ void do_request(void *ptr) {
             goto err;
         }
 
-        log_info("method == %.*s",r->method_end - r->request_start, r->request_start);
-        log_info("uri == %.*s", r->uri_end - r->uri_start, r->uri_start);
+        log_info("method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
+        log_info("uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
 
         log_info("ready to parse request body");
-        rc  = zv_http_parse_request_body(r);
+        rc = zv_http_parse_request_body(r);
         if (rc == ZV_AGAIN) {
             continue;
         } else if (rc != ZV_OK) {
@@ -149,13 +151,17 @@ close:
     free(ptr);
 }
 
-void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
+static void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
     char *question_mark = strchr(uri, '?');
     int file_length;
     if (question_mark) {
         file_length = (int)(question_mark - uri);
     } else {
         file_length = uri_length;
+    }
+
+    if (querystring) {
+        //TODO
     }
     
     strcpy(filename, ROOT);
@@ -182,7 +188,7 @@ void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
     return;
 }
 
-void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
+static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
 {
     char header[MAXLINE], body[MAXLINE];
 
@@ -204,10 +210,10 @@ void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
     return;
 }
 
-void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out) {
+static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out) {
     char header[MAXLINE];
     char buf[SHORTLINE];
-    int n;
+    size_t n;
     struct tm tm;
     
     const char *file_type;
@@ -233,7 +239,7 @@ void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out) {
     sprintf(header, "%sServer: Zaver\r\n", header);
     sprintf(header, "%s\r\n", header);
 
-    n = rio_writen(fd, header, strlen(header));
+    n = (size_t)rio_writen(fd, header, strlen(header));
     check(n == strlen(header), "rio_writen error, errno = %d", errno);
     if (n != strlen(header)) {
         log_err("n != strlen(header)");
@@ -248,7 +254,7 @@ void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t *out) {
     check(srcfd > 2, "open error");
     // can use sendfile
     char *srcaddr = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
-    check(srcaddr > 0, "mmap error");
+    check(srcaddr != (void *) -1, "mmap error");
     close(srcfd);
 
     n = rio_writen(fd, srcaddr, filesize);
@@ -260,7 +266,7 @@ out:
     return;
 }
 
-const char* get_file_type(const char *type)
+static const char* get_file_type(const char *type)
 {
     if (type == NULL) {
         return "text/plain";

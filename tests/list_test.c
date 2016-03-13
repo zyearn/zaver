@@ -35,7 +35,7 @@ void display(list_head *head) {
 
     list_for_each(pos, head) {
         et = list_entry(pos, st_struct, list);
-        printf("arg = %d\n", (int)et->arg1);
+        printf("arg = %p\n", et->arg1);
     }
 }
 
@@ -46,7 +46,7 @@ int main() {
     int isEmpty = list_empty(&st_h.list);
     check(isEmpty == 1, "list should be empty, isEmpty = %d", isEmpty);
 
-    int i;
+    size_t i;
     for (i=0; i<100; i++) {
         add_node((void *)i, &(st_h.list));
     }

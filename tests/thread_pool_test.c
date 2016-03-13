@@ -3,22 +3,22 @@
 #define THREAD_NUM 8
 
 static void sum_n(void *arg) {
-    int n = (int) arg;
-    unsigned long sum = 0, i;
+    size_t n = (size_t) arg;
+    size_t sum = 0, i;
     for (i=0; i<n; i++) {
         sum += i;
     }
     
-    log_info("thread %08x complete sum %d: %lu", pthread_self(), n, sum);
+    log_info("thread %08x complete sum %zu: %zu", (unsigned int)pthread_self(), n, sum);
 }
 
 int main() {
     int rc;
     zv_threadpool_t *tp = threadpool_init(THREAD_NUM);
     
-    int i;
+    size_t i;
     for (i=0; i< 100; i++){
-        log_info("ready to add num %d", i);
+        log_info("ready to add num %zu", i);
         rc = threadpool_add(tp, sum_n, (void *)i);
         check(rc == 0, "rc == 0");
     }
