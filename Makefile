@@ -3,7 +3,7 @@
 # @date 2015.04.22 created by jiashunZhu
 
 CC=gcc
-CFLAGS=-g -O2 -Wall -Wextra -Isrc $(OPTFLAGS)
+CFLAGS=-g -O2 -Wall -Werror -Wextra -Isrc $(OPTFLAGS)
 LIBS=-ldl -lpthread $(OPTLIBS)
 PREFIX?=/usr/local
 LINK=gcc -o

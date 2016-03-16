@@ -8,6 +8,9 @@
 #include <getopt.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
 #include "util.h"
 #include "http.h"
 #include "epoll.h"

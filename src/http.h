@@ -8,12 +8,7 @@
 #define _HTTP_H
 
 #include <strings.h>
-#include <stdio.h>
 #include <stdint.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
 #include "rio.h"
 #include "list.h"
 #include "dbg.h"
@@ -37,6 +32,6 @@ typedef struct mime_type_s {
 	const char *value;
 } mime_type_t;
 
-extern void do_request(void *infd);
+void do_request(void *infd);
 
 #endif

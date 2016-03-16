@@ -115,7 +115,7 @@ static int zv_http_process_if_modified_since(zv_http_request_t *r, zv_http_out_t
 
     double time_diff = difftime(out->mtime, client_time);
     if (fabs(time_diff) < 1e-6) {
-        log_info("content not modified clienttime = %d, mtime = %d\n", client_time, out->mtime);
+        // log_info("content not modified clienttime = %d, mtime = %d\n", client_time, out->mtime);
         /* Not modified */
         out->modified = 0;
         out->status = ZV_HTTP_NOT_MODIFIED;
