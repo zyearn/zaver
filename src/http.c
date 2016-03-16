@@ -192,11 +192,11 @@ static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *lo
 {
     char header[MAXLINE], body[MAXLINE];
 
-    sprintf(body, "<html><title>Tiny Error</title>");
-    sprintf(body, "%s<body bgcolor=""ffffff"">\r\n", body);
-    sprintf(body, "%s%s: %s\r\n", body, errnum, shortmsg);
-    sprintf(body, "%s<p>%s: %s\r\n</p>", body, longmsg, cause);
-    sprintf(body, "%s<hr><em>The Tiny web server</em>\r\n", body);
+    sprintf(body, "<html><title>Zaver Error</title>");
+    sprintf(body, "%s<body bgcolor=""ffffff"">\n", body);
+    sprintf(body, "%s%s: %s\n", body, errnum, shortmsg);
+    sprintf(body, "%s<p>%s: %s\n</p>", body, longmsg, cause);
+    sprintf(body, "%s<hr><em>Zaver web server</em>\n</body></html>", body);
 
     sprintf(header, "HTTP/1.1 %s %s\r\n", errnum, shortmsg);
     sprintf(header, "%sServer: Zaver\r\n", header);
@@ -206,7 +206,7 @@ static void do_error(int fd, char *cause, char *errnum, char *shortmsg, char *lo
     //log_info("header  = \n %s\n", header);
     rio_writen(fd, header, strlen(header));
     rio_writen(fd, body, strlen(body));
-    log_info("leave clienterror\n");
+    //log_info("leave clienterror\n");
     return;
 }
 
@@ -232,8 +232,6 @@ static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t 
         localtime_r(&(out->mtime), &tm);
         strftime(buf, SHORTLINE,  "%a, %d %b %Y %H:%M:%S GMT", &tm);
         sprintf(header, "%sLast-Modified: %s\r\n", header, buf);
-    } else {
-
     }
 
     sprintf(header, "%sServer: Zaver\r\n", header);
