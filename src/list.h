@@ -1,5 +1,11 @@
-#ifndef _ZV_LIST_H
-#define _ZV_LIST_H
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
+#ifndef ZV_LIST_H
+#define ZV_LIST_H
 
 #ifndef NULL
 #define NULL 0
@@ -7,7 +13,6 @@
 
 /*
 * list_head, reference linux kernel implementation
-*
 */
 
 struct list_head {

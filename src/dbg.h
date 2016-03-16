@@ -1,5 +1,11 @@
-#ifndef __dbg_h__
-#define __dbg_h__
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
+#ifndef GDB_H
+#define GDB_H
 
 #include <stdio.h>
 #include <errno.h>

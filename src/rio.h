@@ -1,9 +1,19 @@
-#ifndef _RIO_H
-#define _RIO_H
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
+#ifndef RIO_H
+#define RIO_H
 
 #include <sys/types.h>
 
 #define RIO_BUFSIZE 8192
+
+/*
+* reference the implementation in CSAPP
+*/
 
 typedef struct {
     int rio_fd;             /* descriptor for this internal buf */

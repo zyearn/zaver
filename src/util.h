@@ -1,5 +1,11 @@
-#ifndef _UTIL_H
-#define _UTIL_H
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
+#ifndef UTIL_H
+#define UTIL_H
 
 // max number of listen queue
 #define LISTENQ     1024

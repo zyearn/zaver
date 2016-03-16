@@ -1,5 +1,11 @@
-#ifndef _EPOLL_H
-#define _EPOLL_H
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
+#ifndef EPOLL_H
+#define EPOLL_H
 
 #include <sys/epoll.h>
 

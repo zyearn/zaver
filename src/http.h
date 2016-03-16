@@ -4,8 +4,8 @@
  * Copyright (C) Zaver
  */
 
-#ifndef _HTTP_H
-#define _HTTP_H
+#ifndef HTTP_H
+#define HTTP_H
 
 #include <strings.h>
 #include <stdint.h>

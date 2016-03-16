@@ -1,5 +1,11 @@
-#ifndef _ERROR_H
-#define _ERROR_H
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
+#ifndef ERROR_H
+#define ERROR_H
 
 void unix_error(char *msg) /* unix-style error */
 {
