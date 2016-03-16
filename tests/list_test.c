@@ -1,8 +1,6 @@
 #include <list.h>
 #include <dbg.h>
 
-typedef struct list_head list_head;
-
 typedef struct {
     void *arg;
     list_head list;  
