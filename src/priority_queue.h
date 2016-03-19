@@ -1,3 +1,9 @@
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
 #ifndef PRIORITY_QUEUE_H
 #define PRIORITY_QUEUE_H
 
