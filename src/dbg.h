@@ -4,8 +4,8 @@
  * Copyright (C) Zaver
  */
 
-#ifndef GDB_H
-#define GDB_H
+#ifndef DBG_H
+#define DBG_H
 
 #include <stdio.h>
 #include <errno.h>

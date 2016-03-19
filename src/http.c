@@ -13,6 +13,7 @@
 #include "http.h"
 #include "http_parse.h"
 #include "epoll.h"
+#include "error.h"
 
 static const char* get_file_type(const char *type);
 static void parse_uri(char *uri, int length, char *filename, char *querystring);

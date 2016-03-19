@@ -11,7 +11,6 @@
 #include "http.h"
 
 #define ZV_AGAIN    EAGAIN
-#define ZV_OK       0
 
 #define ZV_HTTP_PARSE_INVALID_METHOD        10
 #define ZV_HTTP_PARSE_INVALID_REQUEST       11

@@ -13,6 +13,7 @@
 #include <time.h>
 #include "http.h"
 #include "http_request.h"
+#include "error.h"
 
 static int zv_http_process_ignore(zv_http_request_t *r, zv_http_out_t *out, char *data, int len);
 static int zv_http_process_connection(zv_http_request_t *r, zv_http_out_t *out, char *data, int len);

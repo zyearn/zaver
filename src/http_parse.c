@@ -6,6 +6,7 @@
 
 #include "http.h"
 #include "http_parse.h"
+#include "error.h"
 
 int zv_http_parse_request_line(zv_http_request_t *r) {
     u_char ch, *p, *m;
