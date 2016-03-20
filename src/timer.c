@@ -112,7 +112,7 @@ void zv_add_timer(zv_http_request_t *rq, size_t timeout, timer_handler_pt handle
     timer_node->handler = handler;
     timer_node->rq = rq;
 
-    rc = zv_pq_insert(&zv_timer, (void *)timer_node);
+    rc = zv_pq_insert(&zv_timer, timer_node);
     check(rc == 0, "zv_add_timer: zv_pq_insert error");
 }
 

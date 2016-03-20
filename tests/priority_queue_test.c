@@ -47,7 +47,7 @@ int main() {
     while (!zv_pq_is_empty(&pq)) {
         min = zv_pq_min(&pq);
         check_exit(min != NULL, "zv_pq_min error");
-        check_exit((size_t)min == (size_t)resultdata[i], "zv_pq_min error");
+        check_exit((size_t)min == (size_t)resultdata[i], "zv_pq_min error, min=%zu, rd[i]=%zu", (size_t)min, (size_t)resultdata[i]);
         i++;
 
         rc = zv_pq_delmin(&pq);

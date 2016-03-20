@@ -15,10 +15,11 @@ The purpose of Zaver is to help developers understand how to write a high perfor
 
 ## compile and run (for now only support Linux2.6+)
 
+please make sure you have [cmake](https://cmake.org/) installed.
 ```
-make (for production environment)
-make dev (for development environment)
-./objs/zaver -c zaver.conf
+mkdir build && cd build
+cmake .. && make
+cd .. && ./build/zaver -c zaver.conf
 ```
 
 ## support
@@ -33,8 +34,10 @@ make dev (for development environment)
 * ~~add conf file~~
 * sendfile
 * proxy
+* FastCGI
 * other HTTP/1.1 features
 * memory pool
+* WebDAV?
 
 ## more details
 

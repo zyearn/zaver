@@ -1,6 +1,6 @@
 *.swp
 *.log
 *.o
-objs/
+build/
 *_test
 tags

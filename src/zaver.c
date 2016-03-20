@@ -142,10 +142,12 @@ int main(int argc, char* argv[]) {
      */
     zv_timer_init();
 
-    /* epoll_wait loop */
+    log_info("zaver started.");
     int n;
     int i, fd;
     int time;
+
+    /* epoll_wait loop */
     while (1) {
         time = zv_find_timer();
         debug("wait time = %d", time);
