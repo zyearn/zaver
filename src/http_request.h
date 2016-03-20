@@ -33,8 +33,8 @@ typedef struct zv_http_request_s {
     void *root;
     int fd;
     int epfd;
-    char buf[MAX_BUF];
-    void *pos, *last;
+    char buf[MAX_BUF];  /* ring buffer */
+    size_t pos, last;
     int state;
     void *request_start;
     void *method_end;   /* not include method_end*/

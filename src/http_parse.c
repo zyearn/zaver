@@ -10,6 +10,8 @@
 
 int zv_http_parse_request_line(zv_http_request_t *r) {
     u_char ch, *p, *m;
+    size_t pi;
+
     enum {
         sw_start = 0,
         sw_method,
@@ -31,7 +33,8 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
     state = r->state;
 
     // log_info("ready to parese request line, start = %d, last= %d", (int)r->pos, (int)r->last);
-    for (p = r->pos; p < (u_char *)r->last; p++) {
+    for (pi = r->pos; pi < r->last; pi++) {
+        p = (u_char *)&r->buf[pi % MAX_BUF];
         ch = *p;
 
         switch (state) {
@@ -257,14 +260,14 @@ int zv_http_parse_request_line(zv_http_request_t *r) {
         }
     }
 
-    r->pos = p;
+    r->pos = pi;
     r->state = state;
 
     return ZV_AGAIN;
 
 done:
 
-    r->pos = p + 1;
+    r->pos = pi + 1;
 
     if (r->request_end == NULL) {
         r->request_end = p;
@@ -277,6 +280,8 @@ done:
 
 int zv_http_parse_request_body(zv_http_request_t *r) {
     u_char ch, *p;
+    size_t pi;
+
     enum {
         sw_start = 0,
         sw_key,
@@ -294,7 +299,8 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
     //log_info("ready to parese request body, start = %d, last= %d", r->pos, r->last);
 
     zv_http_header_t *hd; 
-    for (p = r->pos; p < (u_char *)r->last; p++) {
+    for (pi = r->pos; pi < r->last; pi++) {
+        p = (u_char *)&r->buf[pi % MAX_BUF];
         ch = *p;
 
         switch (state) {
@@ -386,13 +392,13 @@ int zv_http_parse_request_body(zv_http_request_t *r) {
         }   
     }
 
-    r->pos = p;
+    r->pos = pi;
     r->state = state;
 
     return ZV_AGAIN;
 
 done:
-    r->pos = p + 1;
+    r->pos = pi + 1;
 
     r->state = sw_start;
 

@@ -8,5 +8,6 @@
 #define ERROR_H
 
 #define ZV_OK       0
+#define ZV_ERROR    -1
 
 #endif

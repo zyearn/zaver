@@ -17,6 +17,8 @@
 #define ZV_CONF_OK      0
 #define ZV_CONF_ERROR   100
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 struct zv_conf_s {
     void *root;
     int port;

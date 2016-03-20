@@ -47,20 +47,23 @@ mime_type_t zaver_mime[] =
 void do_request(void *ptr) {
     zv_http_request_t *r = (zv_http_request_t *)ptr;
     int fd = r->fd;
-    int rc;
+    int rc, n;
     char filename[SHORTLINE];
     struct stat sbuf;
-    int n;
     ROOT = r->root;
+    char *plast = NULL;
+    size_t remain_size;
     
     for(;;) {
-        n = read(fd, r->last, (uint64_t)r->buf + MAX_BUF - (uint64_t)r->last);
-        // TODO: ring buffer
-        check((uint64_t)r->last < (uint64_t)r->buf + MAX_BUF, "request buffer overflow!");
+        plast = &r->buf[r->last % MAX_BUF];
+        remain_size = MIN(MAX_BUF - (r->last - r->pos) - 1, MAX_BUF - r->last % MAX_BUF);
+
+        n = read(fd, plast, remain_size);
+        check(r->last - r->pos < MAX_BUF, "request buffer overflow!");
 
         if (n == 0) {   
             // EOF
-            log_info("read return 0, ready to close fd %d", fd);
+            log_info("read return 0, ready to close fd %d, remain_size = %zu", fd, remain_size);
             goto err;
         }
 
@@ -73,7 +76,7 @@ void do_request(void *ptr) {
         }
 
         r->last += n;
-        check((size_t)r->last <= (size_t)r->buf + MAX_BUF, "r->last <= MAX_BUF");
+        check(r->last - r->pos < MAX_BUF, "request buffer overflow!");
         
         log_info("ready to parse request line"); 
         rc = zv_http_parse_request_line(r);
@@ -87,7 +90,7 @@ void do_request(void *ptr) {
         log_info("method == %.*s", (int)(r->method_end - r->request_start), (char *)r->request_start);
         log_info("uri == %.*s", (int)(r->uri_end - r->uri_start), (char *)r->uri_start);
 
-        log_info("ready to parse request body");
+        debug("ready to parse request body");
         rc = zv_http_parse_request_body(r);
         if (rc == ZV_AGAIN) {
             continue;

@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     memset(&sa, '\0', sizeof(sa));
     sa.sa_handler = SIG_IGN;
     sa.sa_flags = 0;
-    if (sigaction(SIGPIPE,&sa,NULL)) {
+    if (sigaction(SIGPIPE, &sa, NULL)) {
         log_err("install sigal handler for SIGPIPI failed");
         return 0;
     }

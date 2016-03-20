@@ -11,6 +11,7 @@
 
 #include <math.h>
 #include <time.h>
+#include <unistd.h>
 #include "http.h"
 #include "http_request.h"
 #include "error.h"
@@ -29,7 +30,7 @@ zv_http_header_handle_t zv_http_headers_in[] = {
 int zv_init_request_t(zv_http_request_t *r, int fd, int epfd, zv_conf_t *cf) {
     r->fd = fd;
     r->epfd = epfd;
-    r->pos = r->last = r->buf;
+    r->pos = r->last = 0;
     r->state = 0;
     r->root = cf->root;
     INIT_LIST_HEAD(&(r->list));
