@@ -13,10 +13,11 @@ The purpose of Zaver is to help developers understand how to write a high perfor
 * non-blocking I/O
 * thread-pool
 
-## compile and run
+## compile and run (for now only support Linux2.6+)
 
 ```
-make
+make (for production environment)
+make dev (for development environment)
 ./objs/zaver -c zaver.conf
 ```
 
@@ -24,6 +25,7 @@ make
 
 * HTTP persistent connection
 * browser cache
+* timer(e.g. close socket when timeout)
 
 ## todo
 
@@ -33,7 +35,6 @@ make
 * proxy
 * other HTTP/1.1 features
 * memory pool
-* timer(e.g. close socket when timeout)
 
 ## more details
 

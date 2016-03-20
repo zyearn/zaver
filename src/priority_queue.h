@@ -28,4 +28,5 @@ void *zv_pq_min(zv_pq_t *zv_pq);
 int zv_pq_delmin(zv_pq_t *zv_pq);
 int zv_pq_insert(zv_pq_t *zv_pq, void *item);
 
+int zv_pq_sink(zv_pq_t *zv_pq, size_t i);
 #endif 

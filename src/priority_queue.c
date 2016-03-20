@@ -62,17 +62,19 @@ static void swim(zv_pq_t *zv_pq, size_t k) {
     }
 }
 
-static void sink(zv_pq_t *zv_pq, size_t k) {
+static size_t sink(zv_pq_t *zv_pq, size_t k) {
     size_t j;
     size_t nalloc = zv_pq->nalloc;
 
     while (2*k <= nalloc) {
         j = 2*k;
-        if (j < nalloc && zv_pq->comp(zv_pq->pq[j+1], zv_pq->pq[j])) j++;
+        if (j < nalloc && zv_pq->comp(zv_pq->pq[j], zv_pq->pq[j+1])) j++;
         if (!zv_pq->comp(zv_pq->pq[j], zv_pq->pq[k])) break;
         exch(zv_pq, j, k);
         k = j;
     }
+    
+    return k;
 }
 
 int zv_pq_delmin(zv_pq_t *zv_pq) {
@@ -103,4 +105,8 @@ int zv_pq_insert(zv_pq_t *zv_pq, void *item) {
     swim(zv_pq, zv_pq->nalloc);
 
     return ZV_OK;
+}
+
+int zv_pq_sink(zv_pq_t *zv_pq, size_t i) {
+    return sink(zv_pq, i);
 }

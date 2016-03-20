@@ -87,6 +87,15 @@ void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
     }
 }
 
+int zv_http_close_conn(zv_http_request_t *r) {
+    // NOTICE: closing a file descriptor will cause it to be removed from all epoll sets automatically
+    // http://stackoverflow.com/questions/8707601/is-it-necessary-to-deregister-a-socket-from-epoll-before-closing-it
+    close(r->fd);
+    free(r);
+
+    return ZV_OK;
+}
+
 static int zv_http_process_ignore(zv_http_request_t *r, zv_http_out_t *out, char *data, int len) {
     (void) r;
     (void) out;

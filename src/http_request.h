@@ -55,6 +55,7 @@ typedef struct zv_http_request_s {
     void *cur_header_value_start;
     void *cur_header_value_end;
 
+    void *timer;
 } zv_http_request_t;
 
 typedef struct {
@@ -80,6 +81,8 @@ typedef struct {
 } zv_http_header_handle_t;
 
 void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o);
+int zv_http_close_conn(zv_http_request_t *r);
+
 int zv_init_request_t(zv_http_request_t *r, int fd, int epfd, zv_conf_t *cf);
 int zv_free_request_t(zv_http_request_t *r);
 

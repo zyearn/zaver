@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include "util.h"
+#include "timer.h"
 #include "http.h"
 #include "epoll.h"
 #include "threadpool.h"
@@ -129,17 +130,29 @@ int main(int argc, char* argv[]) {
     zv_epoll_add(epfd, listenfd, &event);
 
     /*
-    create thread pool
+    * create thread pool
     */
+    /*
     zv_threadpool_t *tp = threadpool_init(cf.thread_num);
+    check(tp != NULL, "threadpool_init error");
+    */
     
+    /*
+     * initialize timer
+     */
+    zv_timer_init();
+
     /* epoll_wait loop */
+    int n;
+    int i, fd;
+    int time;
     while (1) {
-        int n;
-        n = zv_epoll_wait(epfd, events, MAXEVENTS, -1);
+        time = zv_find_timer();
+        debug("wait time = %d", time);
+        n = zv_epoll_wait(epfd, events, MAXEVENTS, time);
+        zv_handle_expire_timers();
         
-        int i, fd;
-        for (i=0; i<n; i++) {
+        for (i = 0; i < n; i++) {
             zv_http_request_t *r = (zv_http_request_t *)events[i].data.ptr;
             fd = r->fd;
             
@@ -174,6 +187,7 @@ int main(int argc, char* argv[]) {
                     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
                     zv_epoll_add(epfd, infd, &event);
+                    zv_add_timer(request, TIMEOUT_DEFAULT, zv_http_close_conn);
                 }   // end of while of accept
 
             } else {
@@ -186,15 +200,20 @@ int main(int argc, char* argv[]) {
                 }
 
                 log_info("new data from fd %d", fd);
-                rc = threadpool_add(tp, do_request, events[i].data.ptr);
-                check(rc == 0, "threadpool_add");
+                //rc = threadpool_add(tp, do_request, events[i].data.ptr);
+                //check(rc == 0, "threadpool_add");
+
+                do_request(events[i].data.ptr);
             }
         }   //end of for
     }   // end of while(1)
     
+
+    /*
     if (threadpool_destroy(tp, 1) < 0) {
         log_err("destroy threadpool failed");
     }
+    */
 
     return 0;
 }

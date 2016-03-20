@@ -12,8 +12,10 @@
 #include <fcntl.h>
 #include "http.h"
 #include "http_parse.h"
+#include "http_request.h"
 #include "epoll.h"
 #include "error.h"
+#include "timer.h"
 
 static const char* get_file_type(const char *type);
 static void parse_uri(char *uri, int length, char *filename, char *querystring);
@@ -54,6 +56,7 @@ void do_request(void *ptr) {
     char *plast = NULL;
     size_t remain_size;
     
+    zv_del_timer(r);
     for(;;) {
         plast = &r->buf[r->last % MAX_BUF];
         remain_size = MIN(MAX_BUF - (r->last - r->pos) - 1, MAX_BUF - r->last % MAX_BUF);
@@ -150,23 +153,27 @@ void do_request(void *ptr) {
     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
     zv_epoll_mod(r->epfd, r->fd, &event);
+    zv_add_timer(r, TIMEOUT_DEFAULT, zv_http_close_conn);
     return;
 
 err:
 close:
-    // NOTICE: closing a file descriptor will cause it to be removed from all epoll sets automatically
-    // http://stackoverflow.com/questions/8707601/is-it-necessary-to-deregister-a-socket-from-epoll-before-closing-it
-    close(fd);
-    free(ptr);
+    rc = zv_http_close_conn(r);
+    check(rc == 0, "do_request: zv_http_close_conn");
 }
 
 static void parse_uri(char *uri, int uri_length, char *filename, char *querystring) {
+    check(uri != NULL, "parse_uri: uri is NULL");
+    uri[uri_length] = '\0';
+
     char *question_mark = strchr(uri, '?');
     int file_length;
     if (question_mark) {
         file_length = (int)(question_mark - uri);
+        debug("file_length = (question_mark - uri) = %d", file_length);
     } else {
         file_length = uri_length;
+        debug("file_length = uri_length = %d", file_length);
     }
 
     if (querystring) {
@@ -181,6 +188,7 @@ static void parse_uri(char *uri, int uri_length, char *filename, char *querystri
         return;
     }
 
+    debug("before strncat, filename = %s, uri = %.*s, file_len = %d", filename, file_length, uri, file_length);
     strncat(filename, uri, file_length);
 
     char *last_comp = strrchr(filename, '/');
@@ -233,6 +241,7 @@ static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t 
 
     if (out->keep_alive) {
         sprintf(header, "%sConnection: keep-alive\r\n", header);
+        sprintf(header, "%sKeep-Alive: timeout=%d, max=100\r\n", header, TIMEOUT_DEFAULT);
     }
 
     if (out->modified) {
