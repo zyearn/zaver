@@ -1,3 +1,9 @@
+
+/*
+ * Copyright (C) Zhu Jiashun
+ * Copyright (C) Zaver
+ */
+
 #include "priority_queue.h"
 
 int zv_pq_init(zv_pq_t *zv_pq, zv_pq_comparator_pt comp, size_t size) {
@@ -68,7 +74,7 @@ static size_t sink(zv_pq_t *zv_pq, size_t k) {
 
     while (2*k <= nalloc) {
         j = 2*k;
-        if (j < nalloc && zv_pq->comp(zv_pq->pq[j], zv_pq->pq[j+1])) j++;
+        if (j < nalloc && zv_pq->comp(zv_pq->pq[j+1], zv_pq->pq[j])) j++;
         if (!zv_pq->comp(zv_pq->pq[j], zv_pq->pq[k])) break;
         exch(zv_pq, j, k);
         k = j;
