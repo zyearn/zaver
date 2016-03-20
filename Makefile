@@ -3,7 +3,7 @@
 # @date 2015.04.22 created by jiashunZhu
 
 CC=gcc
-CFLAGS=-g -O2 -Wall -Werror -Wextra -Isrc $(OPTFLAGS)
+CFLAGS=-g -O2 -Wall -Werror -Wextra -Isrc -DNDEBUG $(OPTFLAGS)
 LIBS=-ldl -lpthread $(OPTLIBS)
 PREFIX?=/usr/local
 LINK=gcc -o
@@ -22,7 +22,7 @@ TARGET=objs/zaver
 all: $(TARGET) tests
 zaver: $(TARGET)
 
-dev: CFLAGS=-g -Wall -Isrc -Wextra $(OPTFLAGS)
+dev: CFLAGS=-g -Wall -Werror -Wextra -Isrc $(OPTFLAGS) 
 dev: all
 
 $(TARGET): build $(OBJECTS)
