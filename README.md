@@ -26,7 +26,7 @@ cd .. && ./build/zaver -c zaver.conf
 
 * HTTP persistent connection
 * browser cache
-* timer(e.g. close socket when timeout)
+* timer(use binary heap instead of rbtree used in Nginx)
 
 ## todo
 

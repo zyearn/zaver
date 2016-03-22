@@ -241,7 +241,7 @@ static void serve_static(int fd, char *filename, size_t filesize, zv_http_out_t 
 
     if (out->keep_alive) {
         sprintf(header, "%sConnection: keep-alive\r\n", header);
-        sprintf(header, "%sKeep-Alive: timeout=%d, max=100\r\n", header, TIMEOUT_DEFAULT);
+        sprintf(header, "%sKeep-Alive: timeout=%d\r\n", header, TIMEOUT_DEFAULT);
     }
 
     if (out->modified) {
