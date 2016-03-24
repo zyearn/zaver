@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     sa.sa_handler = SIG_IGN;
     sa.sa_flags = 0;
     if (sigaction(SIGPIPE, &sa, NULL)) {
-        log_err("install sigal handler for SIGPIPI failed");
+        log_err("install sigal handler for SIGPIPE failed");
         return 0;
     }
 

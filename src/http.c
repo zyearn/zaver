@@ -130,7 +130,7 @@ void do_request(void *ptr) {
         
         out->mtime = sbuf.st_mtime;
 
-        zx_http_handle_header(r, out);
+        zv_http_handle_header(r, out);
         check(list_empty(&(r->list)) == 1, "header list should be empty");
         
         if (out->status == 0) {

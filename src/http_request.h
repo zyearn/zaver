@@ -80,7 +80,7 @@ typedef struct {
     zv_http_header_handler_pt handler;
 } zv_http_header_handle_t;
 
-void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o);
+void zv_http_handle_header(zv_http_request_t *r, zv_http_out_t *o);
 int zv_http_close_conn(zv_http_request_t *r);
 
 int zv_init_request_t(zv_http_request_t *r, int fd, int epfd, zv_conf_t *cf);

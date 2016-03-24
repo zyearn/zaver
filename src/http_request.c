@@ -59,7 +59,7 @@ int zv_free_out_t(zv_http_out_t *o) {
     return ZV_OK;
 }
 
-void zx_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
+void zv_http_handle_header(zv_http_request_t *r, zv_http_out_t *o) {
     list_head *pos;
     zv_http_header_t *hd;
     zv_http_header_handle_t *header_in;
