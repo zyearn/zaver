@@ -92,7 +92,7 @@ int threadpool_add(zv_threadpool_t *pool, void (*func)(void *), void *arg) {
     zv_task_t *task = (zv_task_t *)malloc(sizeof(zv_task_t));
     if (task == NULL) {
         log_err("malloc task fail");
-        return -1;
+        goto out;
     }
     
     // TODO: use a memory pool
