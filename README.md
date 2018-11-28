@@ -30,8 +30,6 @@ cd .. && ./build/zaver -c zaver.conf
 
 ## todo
 
-* ~~add command line parameter~~
-* ~~add conf file~~
 * sendfile
 * proxy
 * FastCGI
@@ -41,5 +39,5 @@ cd .. && ./build/zaver -c zaver.conf
 
 ## more details
 
-http://lifeofzjs.com/blog/2015/05/16/how-to-write-a-server/
+https://zyearn.github.io/blog/2015/05/16/how-to-write-a-server/
 
