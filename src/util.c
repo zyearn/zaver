@@ -119,3 +119,24 @@ int read_conf(char *filename, zv_conf_t *cf, char *buf, int len) {
     fclose(fp);
     return ZV_CONF_OK;
 }
+
+char *zv_remove_double_dots(char *s) {
+  char *saved = s, *p = s;
+  while (*s != '\0') {
+    *p++ = *s++;
+    if (s[-1] == '/' || s[-1] == '\\') {
+      while (s[0] != '\0') {
+        if (s[0] == '/' || s[0] == '\\') {
+          s++;
+        } else if (s[0] == '.' && s[1] == '.' &&
+                   (s[2] == '/' || s[2] == '\\')) {
+          s += 2;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+  *p = '\0';
+  return saved;
+}

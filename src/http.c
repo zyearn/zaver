@@ -16,6 +16,7 @@
 #include "epoll.h"
 #include "error.h"
 #include "timer.h"
+#include "util.h"
 
 static const char* get_file_type(const char *type);
 static void parse_uri(char *uri, int length, char *filename, char *querystring);
@@ -201,6 +202,7 @@ static void parse_uri(char *uri, int uri_length, char *filename, char *querystri
         strcat(filename, "index.html");
     }
 
+    zv_remove_double_dots(filename);
     log_info("filename = %s", filename);
     return;
 }
